@@ -1,651 +1,607 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2868
-\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
-{\colortbl;\red255\green255\blue255;\red111\green14\blue195;\red236\green241\blue247;\red0\green0\blue0;
-\red14\green110\blue109;\red24\green112\blue43;\red77\green80\blue85;\red164\green69\blue11;\red107\green0\blue1;
-}
-{\*\expandedcolortbl;;\cssrgb\c51765\c18824\c80784;\cssrgb\c94118\c95686\c97647;\cssrgb\c0\c0\c0;
-\cssrgb\c0\c50196\c50196;\cssrgb\c9412\c50196\c21961;\cssrgb\c37255\c38824\c40784;\cssrgb\c70980\c34902\c3137;\cssrgb\c50196\c0\c0;
-}
-\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
-\deftab720
-\pard\pardeftab720\partightenfactor0
+import React, { useState, useEffect } from 'react';
+import { CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, Search, User, LogOut, ChevronLeft, AlertCircle, ChevronRight, ListChecks, Filter, Sparkles, Calendar, Home, DoorOpen, Coffee, Sun, Building2, Map as MapPinIcon, ExternalLink } from 'lucide-react';
 
-\f0\fs28 \cf2 \cb3 \expnd0\expndtw0\kerning0
-\outl0\strokewidth0 \strokec2 import\cf0 \strokec4  \cf5 \strokec5 React\cf0 \strokec4 , \{ useState, useEffect \} \cf2 \strokec2 from\cf0 \strokec4  \cf6 \strokec6 'react'\cf0 \strokec4 ;\cb1 \
-\cf2 \cb3 \strokec2 import\cf0 \strokec4  \{ \cf5 \strokec5 CalendarDays\cf0 \strokec4 , \cf5 \strokec5 Map\cf0 \strokec4  \cf2 \strokec2 as\cf0 \strokec4  \cf5 \strokec5 MapIcon\cf0 \strokec4 , \cf5 \strokec5 BookOpen\cf0 \strokec4 , \cf5 \strokec5 Clock\cf0 \strokec4 , \cf5 \strokec5 MapPin\cf0 \strokec4 , \cf5 \strokec5 Search\cf0 \strokec4 , \cf5 \strokec5 User\cf0 \strokec4 , \cf5 \strokec5 LogOut\cf0 \strokec4 , \cf5 \strokec5 ChevronLeft\cf0 \strokec4 , \cf5 \strokec5 AlertCircle\cf0 \strokec4 , \cf5 \strokec5 ChevronRight\cf0 \strokec4 , \cf5 \strokec5 ListChecks\cf0 \strokec4 , \cf5 \strokec5 Filter\cf0 \strokec4 , \cf5 \strokec5 Sparkles\cf0 \strokec4 , \cf5 \strokec5 Calendar\cf0 \strokec4 , \cf5 \strokec5 Home\cf0 \strokec4 , \cf5 \strokec5 DoorOpen\cf0 \strokec4 , \cf5 \strokec5 Coffee\cf0 \strokec4 , \cf5 \strokec5 Sun\cf0 \strokec4 , \cf5 \strokec5 Building2\cf0 \strokec4 , \cf5 \strokec5 Map\cf0 \strokec4  \cf2 \strokec2 as\cf0 \strokec4  \cf5 \strokec5 MapPinIcon\cf0 \strokec4 , \cf5 \strokec5 ExternalLink\cf0 \strokec4  \} \cf2 \strokec2 from\cf0 \strokec4  \cf6 \strokec6 'lucide-react'\cf0 \strokec4 ;\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- CONFIGURATION ---\cf0 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 LINKS\cf0 \strokec4  = \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf7 \strokec7 // Itineraries pull live from Google Sheets\cf0 \cb1 \strokec4 \
-\cb3   itineraries: \cf6 \strokec6 "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv"\cf0 \strokec4 ,\cb1 \
-\cb3 \};\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 LOGO_URL\cf0 \strokec4  = \cf6 \strokec6 "https://lh3.googleusercontent.com/d/1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP"\cf0 \strokec4 ;\cb1 \
-\
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4  = \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   dates: \cf6 \strokec6 "Friday 17th \'97 Sunday 19th April 2026"\cf0 \strokec4 ,\cb1 \
-\cb3   tagline: \cf6 \strokec6 "Join us for three days of connection and growth as we explore what it means to be a witness. Together, we will strengthen our bonds with each other and prepare to reach the world around us."\cf0 \strokec4 ,\cb1 \
-\cb3   address: \cf6 \strokec6 "38 Lexton Road, Box Hill North, VIC 3129"\cf0 \strokec4 ,\cb1 \
-\cb3   locationName: \cf6 \strokec6 "FGAM"\cf0 \strokec4 ,\cb1 \
-\cb3   googleMapsUrl: \cf6 \strokec6 "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129"\cf0 \cb1 \strokec4 \
-\cb3 \};\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- DATA: VENUE MAP ---\cf0 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 VENUE_MAP\cf0 \strokec4  = [\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \{\cb1 \
-\cb3     zone: \cf6 \strokec6 "FGA Melbourne"\cf0 \strokec4 ,\cb1 \
-\cb3     address: \cf6 \strokec6 "38 Lexton Road, Box Hill North, VIC 3129"\cf0 \strokec4 ,\cb1 \
-\cb3     mapUrl: \cf6 \strokec6 "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129"\cf0 \strokec4 ,\cb1 \
-\cb3     icon: <\cf5 \strokec5 Home\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \} />,\cb1 \
-\cb3     description: \cf6 \strokec6 "Main Building - Main Sessions, Meals, Kids Program"\cf0 \strokec4 ,\cb1 \
-\cb3     rooms: [\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Meeting Room"\cf0 \strokec4 , note: \cf6 \strokec6 "Level 1"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Lobby"\cf0 \strokec4 , note: \cf6 \strokec6 "Level 2"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Sanctuary"\cf0 \strokec4 , note: \cf6 \strokec6 "Level 2"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Classroom 1-5 (Kids Program)"\cf0 \strokec4 , note: \cf6 \strokec6 "Level 2"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Multipurpose Room (Kids Program)"\cf0 \strokec4 , note: \cf6 \strokec6 "Level 2"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Rooftop (Night Market)"\cf0 \strokec4 , note: \cf6 \strokec6 "Rooftop"\cf0 \strokec4  \}\cb1 \
-\cb3     ]\cb1 \
-\cb3   \},\cb1 \
-\cb3   \{\cb1 \
-\cb3     zone: \cf6 \strokec6 "4/41 Lexton Road"\cf0 \strokec4 ,\cb1 \
-\cb3     address: \cf6 \strokec6 "4/41 Lexton Road, Box Hill North, VIC 3129"\cf0 \strokec4 ,\cb1 \
-\cb3     mapUrl: \cf6 \strokec6 "https://www.google.com/maps/search/?api=1&query=4+41+Lexton+Road+Box+Hill+North+VIC+3129"\cf0 \strokec4 ,\cb1 \
-\cb3     icon: <\cf5 \strokec5 Building2\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \} />,\cb1 \
-\cb3     description: \cf6 \strokec6 "Satellite Workshop Space"\cf0 \strokec4 ,\cb1 \
-\cb3     rooms: [\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Main Space"\cf0 \strokec4 , note: \cf6 \strokec6 "Upstairs"\cf0 \strokec4  \}\cb1 \
-\cb3     ]\cb1 \
-\cb3   \},\cb1 \
-\cb3   \{\cb1 \
-\cb3     zone: \cf6 \strokec6 "7/41 Lexton Road"\cf0 \strokec4 ,\cb1 \
-\cb3     address: \cf6 \strokec6 "7/41 Lexton Road, Box Hill North, VIC 3129"\cf0 \strokec4 ,\cb1 \
-\cb3     mapUrl: \cf6 \strokec6 "https://www.google.com/maps/search/?api=1&query=7+41+Lexton+Road+Box+Hill+North+VIC+3129"\cf0 \strokec4 ,\cb1 \
-\cb3     icon: <\cf5 \strokec5 DoorOpen\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \} />,\cb1 \
-\cb3     description: \cf6 \strokec6 "Satellite Workshop Space"\cf0 \strokec4 ,\cb1 \
-\cb3     rooms: [\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Dance Studio 1"\cf0 \strokec4 , note: \cf6 \strokec6 "Ground Level"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Dance Studio 2"\cf0 \strokec4 , note: \cf6 \strokec6 "Upstairs"\cf0 \strokec4  \}\cb1 \
-\cb3     ]\cb1 \
-\cb3   \},\cb1 \
-\cb3   \{\cb1 \
-\cb3     zone: \cf6 \strokec6 "61 Lexton Road"\cf0 \strokec4 ,\cb1 \
-\cb3     address: \cf6 \strokec6 "61 Lexton Road, Box Hill North, VIC 3129"\cf0 \strokec4 ,\cb1 \
-\cb3     mapUrl: \cf6 \strokec6 "https://www.google.com/maps/search/?api=1&query=61+Lexton+Road+Box+Hill+North+VIC+3129"\cf0 \strokec4 ,\cb1 \
-\cb3     icon: <\cf5 \strokec5 MapPinIcon\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \} />,\cb1 \
-\cb3     description: \cf6 \strokec6 "Satellite Workshop Space"\cf0 \strokec4 ,\cb1 \
-\cb3     rooms: [\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Main Area"\cf0 \strokec4 , note: \cf6 \strokec6 "Ground Level"\cf0 \strokec4  \},\cb1 \
-\cb3       \{ name: \cf6 \strokec6 "Classroom"\cf0 \strokec4 , note: \cf6 \strokec6 "Upstairs"\cf0 \strokec4  \}\cb1 \
-\cb3     ]\cb1 \
-\cb3   \}\cb1 \
-\cb3 ];\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- DATA: WORKSHOPS ---\cf0 \cb1 \strokec4 \
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 WORKSHOPS_DATA\cf0 \strokec4  = [\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \{ id: \cf6 \strokec6 'w1'\cf0 \strokec4 , title: \cf6 \strokec6 'Managing Screen Time'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Kevin and Yen Siow'\cf0 \strokec4 , category: \cf6 \strokec6 'Parenting'\cf0 \strokec4 , biography: \cf6 \strokec6 'As parents of three boys, Kevin and Yen are still on the journey of learning how to navigate screens in a way that honours God, strengthens relationships and shapes character. They\'92ve learned that screens aren\'92t just about time limits, but about relationships, values and understanding the kind of people we are raising.'\cf0 \strokec4 , description: \cf6 \strokec6 'In this workshop, they will share a faith-centred, family values approach to digital habits, drawing on the work of Dr Justin Coulson (Happy Families) and their own lived experience. They will speak honestly about what has worked, what has not worked, and some of the mistakes they have made along the way, in the hope that other families can learn from them. Together, they will explore how calm conversations, shared expectations and simple structures can help families use screens for connection, communication and collaboration, while staying anchored in their values. Parents will leave with practical ideas they can try immediately, and encouragement that it\'92s possible to guide screen use in a way that strengthens family life.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w2'\cf0 \strokec4 , title: \cf6 \strokec6 'Adulting 101'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Mike and Maggie (underwriting)'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth/ Young Adult'\cf0 \strokec4 , biography: \cf6 \strokec6 'Mike is a trained engineer and business owner who sees the world in systems. Maggie is a healthcare professional and homemaker who lives in the details. They married each other which, if you think about it, is either a masterclass in complementary strengths or a daily exercise in patience. Probably both. Between them, they bring a rare combination of big-picture thinking and ground-level practicality to the stuff that actually matters in everyday life.'\cf0 \strokec4 , description: \cf6 \strokec6 "At some point, everyone looks around and realizes they have no idea what they're doing. And that's more normal than anyone admits. This session is an honest, practical conversation about the skills that actually matter in your 20s: finances, career, self care, life admin. Less overwhelm, more clarity.\\n\\nThis session is designed for young adults who are finding their feet. Rather than trying to cover everything, Mike and Maggie will hit the highlights and open the floor, because that's where the best stuff usually lives anyway."\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w3'\cf0 \strokec4 , title: \cf6 \strokec6 'Entrepreneurship'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Aaron Lau/Michael Ting'\cf0 \strokec4 , category: \cf6 \strokec6 'Career'\cf0 \strokec4 , biography: \cf6 \strokec6 "Mike and Aaron have started half a dozen businesses between them some that worked, some that didn't, and all that taught them something. They've built ventures across automotive, healthcare, construction, and consulting, learning along the way that entrepreneurship is less about having all the answers and more about being willing to figure it out as you go."\cf0 \strokec4 , description: \cf6 \strokec6 "Entrepreneurship isn't just about starting a business. It's a posture, a way of seeing the world and responding to what doesn't exist yet. Whether you're building a company, launching a ministry, pioneering a community initiative, or creating something entirely new, the same apostolic DNA runs through it all.\\n\\nIn this conversational session, Aaron and Mike explore what it actually takes: the why behind the entrepreneurial call, the mindset that sustains you when there's no roadmap, and the skills you need to build something from nothing."\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w4'\cf0 \strokec4 , title: \cf6 \strokec6 'Crossing borders, changing jobs'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Alan Wong'\cf0 \strokec4 , category: \cf6 \strokec6 'Career'\cf0 \strokec4 , biography: \cf6 \strokec6 'Alan has worked across Asia-Pacific as an investment banker and fund manager including roles at Macquarie, Acorn Capital, and Sungrow. Having lived in Malaysia, Japan, Hong Kong, Singapore, and Australia, his journey includes career transitions, missed promotions, miscarriage, parenting challenges, and seasons of spiritual wrestling. Through it all, he has come to see the faithful sovereignty of God in life\'92s deserts and border crossings. He speaks from personal experience about faith formed through uncertainty.'\cf0 \strokec4 , description: \cf6 \strokec6 'From Malaysia to Australia, from career ambition to dealing with the painful realities of life and disappointment, I hope that my sharing will encourage you to see how God can use changes and crisis to shape us - in my case this was geographic moves, career setbacks, family trials, and desert seasons - testing times indeed!\\n\\nThrough Scripture and lived experience, I hope to show how we can trust God\'92s sovereignty \'97 especially when the outcome is unclear \'97 and to see uncertainty not as abandonment, but as key method of maturing.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w5'\cf0 \strokec4 , title: \cf6 \strokec6 'Engaging AI'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Alan Wong and Lawrence Chen'\cf0 \strokec4 , category: \cf6 \strokec6 'Tech'\cf0 \strokec4 , biography: \cf6 \strokec6 'Lawrence is a data analyst with a love for mathematics, music, and languages. He works in school funding reform while serving in 1830 ministry. He thinks deeply about how Christians can engage with AI faithfully and wisely. He uses AI in practical and human ways for home group, at work, for content creation, and as a son at home.\\n\\nAlan is a father, ex-entrepreneur, ex-fund manager and investment banker. He\'92s passionate about renewable energy and is currently on a study break. He is always interested learning new things and has a paid subscription to AI which he\'92s used for business, learning web design and content creation.'\cf0 \strokec4 , description: \cf6 \strokec6 'AI is rapidly reshaping how we access information, solve problems and create \'97 accelerating many of the everyday tasks we already do. In this workshop, Lawrence and Alan will explore what AI is (and isn\'92t), and show how it can be used wisely and practically in daily life.\\n\\nWe\'92ll begin with simple, hands\uc0\u8209 on examples that build AI literacy, reducing everyday friction. From there, we\'92ll consider the deeper questions \'97 limitations, thinking habits, guardrails, and how Christians can engage this technological shift with wisdom and discernment.\\n\\nThis session offers a grounded, practical approach for engaging AI confidently and responsibly in a changing world.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w6'\cf0 \strokec4 , title: \cf6 \strokec6 'Crowded House'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ash and Grace Chan'\cf0 \strokec4 , category: \cf6 \strokec6 'Family'\cf0 \strokec4 , biography: \cf6 \strokec6 'Hi, we\'92re Grace and Ash! We have been married for seven years and are the parents of Aria, our spirited three-year-old, and Madison, our joyful one-year-old. When Maddy arrived, we made the strategic decision to trade our autonomy for a "village," moving into Grace\'92s parents\\' home. We bring a candid and transparent lens to the daily chaos of a five-adult household. We don\'92t claim to have "clocked" the art of multigenerational living; instead, we offer a raw, honest look at the logistical wins and emotional friction of sharing a life\'97and a kitchen\'97across three generations.'\cf0 \strokec4 , description: \cf6 \strokec6 'We often hear the proverb, but we rarely discuss the logistics of the "Village" when it\'92s all under one roof. Living with three generations offers incredible support, but it also brings a unique set of challenges\'97from conflicting routines to the "unspoken rules" of shared spaces. In this session, we\'92re opening up about our journey of living with parents and kids together.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w7'\cf0 \strokec4 , title: \cf6 \strokec6 'Study Hacks'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ashley Ng'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'Hi, I\'92m Ashley! I graduated from Balwyn High School in 2022, where I completed 8 VCE subjects over 3 years. Since then, I\'92ve also graduated with a Bachelor of Commerce degree at UniMelb (Actuarial Studies and Finance) and am currently pursuing a Diploma in Music - so I\'92ve ended up studying a pretty wide mix of subjects. I\'92ve also been tutoring high school students from year 7-12 for the past 5 years, and I\'92m really passionate about teaching and having a healthy balance between studies and everything else I\'92m involved in!'\cf0 \strokec4 , description: \cf6 \strokec6 'Do you feel like you study from hours on end but get nowhere? Or you\'92re struggling to balance school with everything else in life? In this workshop, I\'92ll be sharing the study strategies and practical tips that helped me during both VCE and university, and what I\'92ve learned from tutoring high school students. From remembering content more effectively and avoiding last-minute cramming to prepare more confidently for assessments or exams and managing your time well, the goal is to have a healthy balance between school and your priorities. You\'92ll gain practical ideas and strategies that you can start using immediately!'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w8'\cf0 \strokec4 , title: \cf6 \strokec6 'Women Dating'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Belle Seow/Grace Leong?'\cf0 \strokec4 , category: \cf6 \strokec6 'Relationships'\cf0 \strokec4 , biography: \cf6 \strokec6 "Belle is 30 years of age this year, has interest in fitness for injury prevention, baking for hunger prevention, and has been in a committed relationship with her husband Elijah for nearly 5 years including 2 years of marriage. Open communication, authenticity, and a robust understanding of one's self are things that Belle considers important for Godly relationships - and belle is keen to support young women in this endeavour.\\n\\nGrace is a 26 year old designer who loves sharing in her love of good food, talking about art and a good tv show. Now she gets to share all that with her partner and fianc\'e9 Dong (Daniel) as they work towards the next chapter of their relationship."\cf0 \strokec4 , description: \cf6 \strokec6 'In today\'92s age, dating is more complicated than it ever has been. But have you ever thought to slow down and rediscover who you are in Christ before first navigating relationships?\\n\\nWhether you\'92re single, dating, or figuring things out, this workshop is about grounding yourself in God\'92s truth so you don\'92t lose yourself in the process.\\n\\nTogether with Belle and Grace we\'92ll talk honestly about relationships, boundaries, insecurities, and expectations, and what it means to prepare yourself in the waiting, so you can date from a place of peace, wholeness, and faith!'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w9'\cf0 \strokec4 , title: \cf6 \strokec6 'Demons in Christians?'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Charles Ho'\cf0 \strokec4 , category: \cf6 \strokec6 'Theology'\cf0 \strokec4 , biography: \cf6 \strokec6 'We currently leading the Shalom Ministry, which is the Inner Healing and Deliverance (IHD) Ministry in FGAM. We have been involved in IHD in outside of FGAM for many years and have led mission trips focusing on IHD to Thailand and Laos. Our passion is to see Christians delivered and set free from demonic oppression and spiritual bondages.'\cf0 \strokec4 , description: \cf6 \strokec6 'Demons cannot have Christians but Christians can have demons! Demons are for real but we need to recognise them. This workshop will the topic cover how Christians may experience demonic oppression. We\'92ll look at the open doors that allow such oppression and the ways it can affect us mentally, physically, and spiritually. You will learn to identify the signs of demonic oppression and discover practical steps toward freedom.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w10'\cf0 \strokec4 , title: \cf6 \strokec6 'Sex in the Suburbs'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Daniel and Julie Wong'\cf0 \strokec4 , category: \cf6 \strokec6 'Marriage'\cf0 \strokec4 , biography: \cf6 \strokec6 "Julie and Daniel Wong have been married for 37 years, with 4 adult children and 4 grandchildren. Daniel has his own AI business and Julie is a paediatric Occupational Therapist, with 34 years of counselling experience. Julie and Daniel have counselled many couples, in pre-marital counselling as well as married couples facing crises. They have a heart to see marriages flourish, and healed so that families can be healthy and strong in God's design. They have been a part of the FGA family for 11 years and serve in the prayer ministry as well as Christian Education and kitchen."\cf0 \strokec4 , description: \cf6 \strokec6 'Sexual intimacy in marriage was designed by God to bring joy and fulfillment. In this workshop, we are going to talk about the joys of marital sex, as well as discussing some of the barriers that married couples face in intimacy and how to overcome them. Come prepared with questions and open hearts and minds to hear what the Holy Spirit is saying to you, so that you can start the journey toward a satisfying and fulfilling intimate marriage.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w11'\cf0 \strokec4 , title: \cf6 \strokec6 'Running'\cf0 \strokec4 , speaker: \cf6 \strokec6 'David Gunn, Michelle Tsiros and Dennis Wong'\cf0 \strokec4 , category: \cf6 \strokec6 'Health'\cf0 \strokec4 , biography: \cf6 \strokec6 'David \'93Gunny\'94 Gunn, Michelle Tsiros, and Dr Dennis Wong are all passionate about the benefits of running for physical, mental, and spiritual health.'\cf0 \strokec4 , description: \cf6 \strokec6 'What Are You Running Towards? Have you ever thought about getting into running, but found it a little daunting? It should be as simple as putting on a pair of runners and heading out the door \'97 right? This workshop isn\'92t about becoming an elite athlete. It\'92s about discovering what many of us may have quietly missed by not running.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w12'\cf0 \strokec4 , title: \cf6 \strokec6 'Gut & Brain'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Dr. Dennis Wong'\cf0 \strokec4 , category: \cf6 \strokec6 'Health'\cf0 \strokec4 , biography: \cf6 \strokec6 'Dr Huang (Dennis) S. Wong, MBA FRACP BMBS, is a medical doctor and aged-care leader with a strong interest in brain health, dementia prevention, and the role of diet and daily lifestyle in protecting memory.'\cf0 \strokec4 , description: \cf6 \strokec6 'Our Gut\'96Brain Axis Workshop is a practical, science-grounded, and culturally sensitive exploration of how what we eat shapes how we think, feel, and age. This session unpacks the fascinating two-way communication between the gut and the brain\'97covering the microbiome, inflammation, metabolism, mood, and cognitive health\'97in an evidence-based yet easy-to-understand way.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w13'\cf0 \strokec4 , title: \cf6 \strokec6 'Menopause Questions'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Dr. Sze Wey Lee'\cf0 \strokec4 , category: \cf6 \strokec6 'Health'\cf0 \strokec4 , biography: \cf6 \strokec6 'I\'92m Sze Lee and I\'92m an obstetrician and gynaecologist based at Epworth Freemasons in East Melbourne. I have had the privilege of journeying with women through the many stages of their reproductive life for almost 20 years.'\cf0 \strokec4 , description: \cf6 \strokec6 'Menopause is often misunderstood and there are myths galore about what the symptoms of menopause are, what can be done about them and the pros and cons of managements.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w14'\cf0 \strokec4 , title: \cf6 \strokec6 'Life Vision Board'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Elaine Choi'\cf0 \strokec4 , category: \cf6 \strokec6 'Personal Growth'\cf0 \strokec4 , biography: \cf6 \strokec6 'Elaine Choi is a trainer and facilitator with a heart for guiding women through seasons of transition. As the founder of Eltitude Collective, she combines structured learning tools with prayerful reflection.'\cf0 \strokec4 , description: \cf6 \strokec6 'In this workshop, participants will explore what it means to align their lives with God\'92s purpose, rather than personal pressure or comparison.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w15'\cf0 \strokec4 , title: \cf6 \strokec6 'Know Your WHY'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Elijah Seow'\cf0 \strokec4 , category: \cf6 \strokec6 'Purpose'\cf0 \strokec4 , biography: \cf6 \strokec6 'Elijah is 29 years of age and has been following Christ for the past 12 years of his life with a heart for transparency and hard truths spoken in love.'\cf0 \strokec4 , description: \cf6 \strokec6 'Why do you do what you do? When misdirected - social commitments, work, family obligations, and even ministry can all lead to exhaustion, frustration, and even burnout.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w16'\cf0 \strokec4 , title: \cf6 \strokec6 'Men Dating'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Elijah Seow/Daniel Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Relationships'\cf0 \strokec4 , biography: \cf6 \strokec6 'Elijah (29) is newly married and Daniel Dong (30) is currently engaged. They bring insights from their own dating journeys.'\cf0 \strokec4 , description: \cf6 \strokec6 'A joint talk for young adult men with a focus on navigating \'91dating\'92 today, how to do it well by sharing perspectives, mistakes, and learnings.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w17'\cf0 \strokec4 , title: \cf6 \strokec6 'Beyond Possible'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Evelyn Seow'\cf0 \strokec4 , category: \cf6 \strokec6 'Theology'\cf0 \strokec4 , biography: \cf6 \strokec6 'With over four decades of ministry experience, Evelyn Seow is dedicated to empowering Christians to walk in the supernatural.'\cf0 \strokec4 , description: \cf6 \strokec6 'Jesus promised that "greater works shall we do," and this workshop will provide biblical steps to manifest the Kingdom and walk in the miraculous.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w18'\cf0 \strokec4 , title: \cf6 \strokec6 'Homeschool Life'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ewnice Teh (and Tim)'\cf0 \strokec4 , category: \cf6 \strokec6 'Parenting'\cf0 \strokec4 , biography: \cf6 \strokec6 'Ewnice and Tim have been married for 15 years and are raising three children while managing their online businesses.'\cf0 \strokec4 , description: \cf6 \strokec6 'Ewnice shares her testimony of why they chose to homeschool and how it has allowed their family to reclaim time and focus on intentional presence.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w19'\cf0 \strokec4 , title: \cf6 \strokec6 'Meet Meat'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Jean-Paul Seow'\cf0 \strokec4 , category: \cf6 \strokec6 'Cooking'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'If you love steak, this one\'92s for you! Learn about different cuts, seasoning tricks, and how to get restaurant-quality results at home.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w20'\cf0 \strokec4 , title: \cf6 \strokec6 'Motorhome Life'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Jit Lim'\cf0 \strokec4 , category: \cf6 \strokec6 'Lifestyle'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Jit shares memories and experiences from three winters on the road traveling around Australia.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w21'\cf0 \strokec4 , title: \cf6 \strokec6 'Unexpected Life'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Josh So and Mel Cheung'\cf0 \strokec4 , category: \cf6 \strokec6 'Testimony'\cf0 \strokec4 , biography: \cf6 \strokec6 'Josh and Mel have been together for 11 years and call FGAM home.'\cf0 \strokec4 , description: \cf6 \strokec6 'A vulnerable look at an 11-year journey, exploring how God works through seasons of waiting, suffering, and uncertainty.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w22'\cf0 \strokec4 , title: \cf6 \strokec6 'Creative Dance'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Kim Teh'\cf0 \strokec4 , category: \cf6 \strokec6 'Arts'\cf0 \strokec4 , biography: \cf6 \strokec6 'Kim is a passionate dance choreographer and teacher who loves facilitating individuals to discover their hidden dancer for God.'\cf0 \strokec4 , description: \cf6 \strokec6 'Discover a space where movement becomes prayer and creative expression unfolds to encounter God.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w23'\cf0 \strokec4 , title: \cf6 \strokec6 'Teen Mental Health'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Marie Yap (OAM)'\cf0 \strokec4 , category: \cf6 \strokec6 'Parenting'\cf0 \strokec4 , biography: \cf6 \strokec6 'Marie is a Professor of Psychology at Monash University specializing in adolescent mental health.'\cf0 \strokec4 , description: \cf6 \strokec6 'Learn practical and spiritual strategies to support the mental health and wellbeing of teenagers.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w24'\cf0 \strokec4 , title: \cf6 \strokec6 'Parenting Expectations'\cf0 \strokec4 , speaker: \cf6 \strokec6 'May Yen Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Parenting'\cf0 \strokec4 , biography: \cf6 \strokec6 'May Yen Ong is deeply passionate about seeing families flourish and has served in ministry for over 20 years.'\cf0 \strokec4 , description: \cf6 \strokec6 'Navigate changing expectations as children grow into teens and young adults while maintaining strong relationships.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w25'\cf0 \strokec4 , title: \cf6 \strokec6 'God\'92s Will'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Michael Ting / Stephanie Lok'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'Mike runs 1830 and Steph is a nurse; both are actively living the question of God\\'s will in their lives.'\cf0 \strokec4 , description: \cf6 \strokec6 '"What does God actually want for my life?" Explore this common question through lived experience and guideposts.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w26'\cf0 \strokec4 , title: \cf6 \strokec6 'Simple Cooking'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Min Leong Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Cooking'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'A live food demonstration focused on effortless cooking, perfect for individuals or families.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w27'\cf0 \strokec4 , title: \cf6 \strokec6 'Domestic Violence'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Mona Julien'\cf0 \strokec4 , category: \cf6 \strokec6 'Care'\cf0 \strokec4 , biography: \cf6 \strokec6 'Mona has over two decades of experience working with families and people with disabilities.'\cf0 \strokec4 , description: \cf6 \strokec6 'A real, down\uc0\u8209 to\u8209 earth community talk about hidden domestic violence and what supportive responses look like.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w28'\cf0 \strokec4 , title: \cf6 \strokec6 'Sanctification and Success'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Nevile Waterman'\cf0 \strokec4 , category: \cf6 \strokec6 'Leadership'\cf0 \strokec4 , biography: \cf6 \strokec6 'Nev is a Christian husband, father, and business leader with many years of experience in church and corporate life.'\cf0 \strokec4 , description: \cf6 \strokec6 'Grow in faith, character, and confidence as you learn to follow Christ in a complex world.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w29'\cf0 \strokec4 , title: \cf6 \strokec6 'Grief & Loss'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Andrew Harper'\cf0 \strokec4 , category: \cf6 \strokec6 'Care'\cf0 \strokec4 , biography: \cf6 \strokec6 'Ps. Andrew served as a hospital chaplain for 11 years, caring for patients and families.'\cf0 \strokec4 , description: \cf6 \strokec6 'Discuss the journey of grief and how we may encounter God in the midst of often painful seasons.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w30'\cf0 \strokec4 , title: \cf6 \strokec6 'Advanced Bible Study'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Andrew Harper'\cf0 \strokec4 , category: \cf6 \strokec6 'Theology'\cf0 \strokec4 , biography: \cf6 \strokec6 'Ps. Andrew has served in pastoral and leadership roles since 1987.'\cf0 \strokec4 , description: \cf6 \strokec6 'Details coming soon.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w31'\cf0 \strokec4 , title: \cf6 \strokec6 "Following God's Calling"\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Roland Seow'\cf0 \strokec4 , category: \cf6 \strokec6 'Testimony'\cf0 \strokec4 , biography: \cf6 \strokec6 'Ps Roland is the Founding Pastor of FGA Melbourne with a passion for missions and families.'\cf0 \strokec4 , description: \cf6 \strokec6 'Chronicling FGAM\\'s formation story to help participants discern God\\'s voice amid life\\'s uncertainties.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w32'\cf0 \strokec4 , title: \cf6 \strokec6 'Healing Parental Hurt'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Sarah Man and Lai Hing'\cf0 \strokec4 , category: \cf6 \strokec6 'Family'\cf0 \strokec4 , biography: \cf6 \strokec6 'Lai Hing is a social worker and Sarah is a counsellor. They serve at FGA and work in social inclusion.'\cf0 \strokec4 , description: \cf6 \strokec6 'A mother and daughter\'92s personal testimony on modeling Christlike humility to address and repair relational hurts.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w33'\cf0 \strokec4 , title: \cf6 \strokec6 'Spirit-Led Parenting'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Sonja Loke'\cf0 \strokec4 , category: \cf6 \strokec6 'Parenting'\cf0 \strokec4 , biography: \cf6 \strokec6 'Sonja is the Kids Pastor at FGA Kids and a mother of four.'\cf0 \strokec4 , description: \cf6 \strokec6 'Inviting the Holy Spirit into your parenting journey transform how you respond to your children.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w34'\cf0 \strokec4 , title: \cf6 \strokec6 'Financial Freedom'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Wally Chiang'\cf0 \strokec4 , category: \cf6 \strokec6 'Finance'\cf0 \strokec4 , biography: \cf6 \strokec6 'Wally retired at 41 after reaching financial independence and founded FAT FIRE Australia.'\cf0 \strokec4 , description: \cf6 \strokec6 'Unpack why so many feel trapped on a treadmill and learn a framework grounded in biblical principles.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w35'\cf0 \strokec4 , title: \cf6 \strokec6 'Missions Topic'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Chai Ng'\cf0 \strokec4 , category: \cf6 \strokec6 'Missions'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'We are called to missions.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w36'\cf0 \strokec4 , title: \cf6 \strokec6 'Family Activity'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Harold Nguyen'\cf0 \strokec4 , category: \cf6 \strokec6 'Family'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'A fun stage activity for all families.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w37'\cf0 \strokec4 , title: \cf6 \strokec6 'Grow in Worship'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Iain Low'\cf0 \strokec4 , category: \cf6 \strokec6 'Worship'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Learn how a life of worship contributes to spiritual growth.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w38'\cf0 \strokec4 , title: \cf6 \strokec6 'Living with Disability'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ivan Low'\cf0 \strokec4 , category: \cf6 \strokec6 'Lifestyle'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'A lived testimony about disability and how God walks with you.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w39'\cf0 \strokec4 , title: \cf6 \strokec6 'Counselling Options'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Matt Jones'\cf0 \strokec4 , category: \cf6 \strokec6 'Care'\cf0 \strokec4 , biography: \cf6 \strokec6 'Matt Jones is Head of Crossway LifeCare and an ordained Baptist minister.'\cf0 \strokec4 , description: \cf6 \strokec6 'When is it appropriate to refer to professional care? Explore these challenges to give you confidence to care.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w40'\cf0 \strokec4 , title: \cf6 \strokec6 'Apologetics'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Peggy Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Theology'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Learn how to defend your faith from Bible scholar and church elder Aunty Peggy.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w41'\cf0 \strokec4 , title: \cf6 \strokec6 'Steps for Staying Faithful'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Peggy Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Faith'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Practical steps for staying faithful as a Christian, suitable for all maturity stages.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w42'\cf0 \strokec4 , title: \cf6 \strokec6 'No Burnouts'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Albert Lee'\cf0 \strokec4 , category: \cf6 \strokec6 'Leadership'\cf0 \strokec4 , biography: \cf6 \strokec6 'Albert Lee is a seasoned commercial executive with over 30 years of multinationals experience.'\cf0 \strokec4 , description: \cf6 \strokec6 'Move beyond the clich\'e9 of "doing less" to the art of leading better without consuming yourself.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w43'\cf0 \strokec4 , title: \cf6 \strokec6 'Decision Fatigue'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Chris Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Leadership'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Unpack why decision fatigue is common and how to approach making choices more wisely.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w44'\cf0 \strokec4 , title: \cf6 \strokec6 "Things We Don't Talk About in the Journey"\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Chris Ong'\cf0 \strokec4 , category: \cf6 \strokec6 'Testimony'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Ps. Chris Ong reflects honestly on the hidden costs and trials that shape a 30-year journey.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w45'\cf0 \strokec4 , title: \cf6 \strokec6 'Honesty'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Isaac Ling'\cf0 \strokec4 , category: \cf6 \strokec6 'Faith'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'How to live an honest, transparent God-honoring life and the repercussions of not doing so.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w46'\cf0 \strokec4 , title: \cf6 \strokec6 'Spiritual Ministry'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Ps. Isaac Ling'\cf0 \strokec4 , category: \cf6 \strokec6 'Ministry'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Come for a time of spiritual ministry with Ps. Isaac Ling.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w47'\cf0 \strokec4 , title: \cf6 \strokec6 'Older Fitness'\cf0 \strokec4 , speaker: \cf6 \strokec6 'Tim Tan'\cf0 \strokec4 , category: \cf6 \strokec6 'Health'\cf0 \strokec4 , biography: \cf6 \strokec6 'Timothy is a chiropractor passionate about empowering older generations to feel strong.'\cf0 \strokec4 , description: \cf6 \strokec6 'Honour God with your body as a temple. Beginner-friendly exercises and stretches.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w48'\cf0 \strokec4 , title: \cf6 \strokec6 'Youth are Leaders Today'\cf0 \strokec4 , speaker: \cf6 \strokec6 'JP/Jordan'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'A youth-led session sharing how young people are learning to live out their faith now.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w49'\cf0 \strokec4 , title: \cf6 \strokec6 'My Faith, My Journey (Youth)'\cf0 \strokec4 , speaker: \cf6 \strokec6 'TBC'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Introduces youth to biblical testimony and everyday faithfulness.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w50'\cf0 \strokec4 , title: \cf6 \strokec6 'Live It Out! (Youth)'\cf0 \strokec4 , speaker: \cf6 \strokec6 'TBC'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'A panel discussion equiping youth to see how everyday actions reflect Christ.'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w51'\cf0 \strokec4 , title: \cf6 \strokec6 'Family Stage Activity'\cf0 \strokec4 , speaker: \cf6 \strokec6 'TBC'\cf0 \strokec4 , category: \cf6 \strokec6 'Family'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'TBC'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w52'\cf0 \strokec4 , title: \cf6 \strokec6 'Youth Presentation Activity'\cf0 \strokec4 , speaker: \cf6 \strokec6 'TBC'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'TBC'\cf0 \strokec4  \},\cb1 \
-\cb3   \{ id: \cf6 \strokec6 'w53'\cf0 \strokec4 , title: \cf6 \strokec6 'Designing A Youth Service (Youth)'\cf0 \strokec4 , speaker: \cf6 \strokec6 'TBC'\cf0 \strokec4 , category: \cf6 \strokec6 'Youth'\cf0 \strokec4 , biography: \cf6 \strokec6 'TBC'\cf0 \strokec4 , description: \cf6 \strokec6 'Showcase the testimonies of young people and vibrancy of next-gen faith.'\cf0 \strokec4  \},\cb1 \
-\cb3 ];\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 const\cf0 \strokec4  \cf5 \strokec5 MASTER_SCHEDULE\cf0 \strokec4  = [\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \{ \cb1 \
-\cb3     date: \cf6 \strokec6 'Friday'\cf0 \strokec4 , \cb1 \
-\cb3     events: [ \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'f1'\cf0 \strokec4 , time: \cf6 \strokec6 '5:30 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Doors Open & Dinner'\cf0 \strokec4 , location: \cf6 \strokec6 'Lobby'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'f2'\cf0 \strokec4 , time: \cf6 \strokec6 '7:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Doors Open & Keynote Session'\cf0 \strokec4 , location: \cf6 \strokec6 'Sanctuary'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \} \cb1 \
-\cb3     ] \cb1 \
-\cb3   \},\cb1 \
-\cb3   \{ \cb1 \
-\cb3     date: \cf6 \strokec6 'Saturday'\cf0 \strokec4 , \cb1 \
-\cb3     events: [ \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's1'\cf0 \strokec4 , time: \cf6 \strokec6 '9:00 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'All In Session'\cf0 \strokec4 , location: \cf6 \strokec6 'Sanctuary'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's2'\cf0 \strokec4 , time: \cf6 \strokec6 '9:30 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 1'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's3'\cf0 \strokec4 , time: \cf6 \strokec6 '10:30 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 2'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's4'\cf0 \strokec4 , time: \cf6 \strokec6 '12:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 3/Lunch'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's5'\cf0 \strokec4 , time: \cf6 \strokec6 '1:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 4/Lunch'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's6'\cf0 \strokec4 , time: \cf6 \strokec6 '2:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 5'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's7'\cf0 \strokec4 , time: \cf6 \strokec6 '3:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 6'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 's8'\cf0 \strokec4 , time: \cf6 \strokec6 '4:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Keynote Session'\cf0 \strokec4 , location: \cf6 \strokec6 'Sanctuary'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \},\cb1 \
-\cb3       \{ id: \cf6 \strokec6 's9'\cf0 \strokec4 , time: \cf6 \strokec6 '6:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Night Market'\cf0 \strokec4 , location: \cf6 \strokec6 'FGAM Rooftop'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \}\cb1 \
-\cb3     ] \cb1 \
-\cb3   \},\cb1 \
-\cb3   \{ \cb1 \
-\cb3     date: \cf6 \strokec6 'Sunday'\cf0 \strokec4 , \cb1 \
-\cb3     events: [ \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su1'\cf0 \strokec4 , time: \cf6 \strokec6 '9:00 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'All In Session'\cf0 \strokec4 , location: \cf6 \strokec6 'Sanctuary'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su2'\cf0 \strokec4 , time: \cf6 \strokec6 '9:30 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 7'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su3'\cf0 \strokec4 , time: \cf6 \strokec6 '10:30 AM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 8'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su4'\cf0 \strokec4 , time: \cf6 \strokec6 '12:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 9/Lunch'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su5'\cf0 \strokec4 , time: \cf6 \strokec6 '1:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 10/Lunch'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su6'\cf0 \strokec4 , time: \cf6 \strokec6 '2:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'Workshop Session 11'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  \}, \cb1 \
-\cb3       \{ id: \cf6 \strokec6 'su7'\cf0 \strokec4 , time: \cf6 \strokec6 '3:00 PM'\cf0 \strokec4 , title: \cf6 \strokec6 'CONFERENCE CLOSE KEYNOTE'\cf0 \strokec4 , location: \cf6 \strokec6 'Sanctuary'\cf0 \strokec4 , \cf2 \strokec2 type\cf0 \strokec4 : \cf6 \strokec6 'main'\cf0 \strokec4  \} \cb1 \
-\cb3     ] \cb1 \
-\cb3   \}\cb1 \
-\cb3 ];\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- HELPERS ---\cf0 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  getSafeField(row, fieldName) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 if\cf0 \strokec4  (!row) \cf2 \strokec2 return\cf0 \strokec4  \cf6 \strokec6 ''\cf0 \strokec4 ;\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  cleanTarget = fieldName.trim().toLowerCase();\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  actualKey = \cf5 \strokec5 Object\cf0 \strokec4 .keys(row).find(k => k.trim().toLowerCase() === cleanTarget);\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  value = actualKey ? row[actualKey] : \cf6 \strokec6 ''\cf0 \strokec4 ;\cb1 \
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  (value || \cf6 \strokec6 ''\cf0 \strokec4 ).toString().trim();\cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  parseCSV(text) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 const\cf0 \strokec4  lines = text.split(\cf9 \strokec9 /\\r?\\n/\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 if\cf0 \strokec4  (lines.length < \cf8 \strokec8 2\cf0 \strokec4 ) \cf2 \strokec2 return\cf0 \strokec4  [];\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  headers = lines[\cf8 \strokec8 0\cf0 \strokec4 ].split(\cf6 \strokec6 ','\cf0 \strokec4 ).map(h => h.trim().replace(\cf9 \strokec9 /^"|"$/\cf2 \strokec2 g\cf0 \strokec4 , \cf6 \strokec6 ''\cf0 \strokec4 ));\cb1 \
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  lines.slice(\cf8 \strokec8 1\cf0 \strokec4 )\cb1 \
-\cb3     .filter(l => l.trim().length > \cf8 \strokec8 0\cf0 \strokec4 )\cb1 \
-\cb3     .map((line) => \{\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  values = line.split(\cf9 \strokec9 /,(?=(?:(?:[^"]*")\{2\})*[^"]*$)/\cf0 \strokec4 ).map(v => v.trim().replace(\cf9 \strokec9 /^"|"$/\cf2 \strokec2 g\cf0 \strokec4 , \cf6 \strokec6 ''\cf0 \strokec4 ));\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  row = \{\};\cb1 \
-\cb3       headers.forEach((h, i) => \{ \cf2 \strokec2 if\cf0 \strokec4  (h) row[h] = values[i] || \cf6 \strokec6 ''\cf0 \strokec4 ; \});\cb1 \
-\cb3       \cf2 \strokec2 return\cf0 \strokec4  row;\cb1 \
-\cb3     \})\cb1 \
-\cb3     .filter(row => \cf5 \strokec5 Object\cf0 \strokec4 .values(row).some(v => v.trim() !== \cf6 \strokec6 ''\cf0 \strokec4 )); \cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- COMPONENTS ---\cf0 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  \cf5 \strokec5 NavItem\cf0 \strokec4 (\{ icon, label, isActive, onClick \}) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3     <button onClick=\{onClick\} className=\{\cf6 \strokec6 `flex flex-col items-center justify-center w-full h-full space-y-1 transition-all \cf0 \strokec4 $\{isActive ? \cf6 \strokec6 'text-[#4563AD]'\cf0 \strokec4  : \cf6 \strokec6 'text-gray-400'\cf0 \strokec4 \}\cf6 \strokec6 `\cf0 \strokec4 \}>\cb1 \
-\cb3       <div className=\{\cf6 \strokec6 `p-1.5 rounded-xl transition-all \cf0 \strokec4 $\{isActive ? \cf6 \strokec6 'bg-[#4563AD]/10'\cf0 \strokec4  : \cf6 \strokec6 ''\cf0 \strokec4 \}\cf6 \strokec6 `\cf0 \strokec4 \}>\{icon\}</div>\cb1 \
-\cb3       <span className=\cf6 \strokec6 "text-[9px] font-extrabold uppercase tracking-tighter text-center leading-tight"\cf0 \strokec4 >\{label\}</span>\cb1 \
-\cb3     </button>\cb1 \
-\cb3   );\cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  \cf5 \strokec5 ExpandableText\cf0 \strokec4 (\{ text, maxLength = \cf8 \strokec8 120\cf0 \strokec4 , className = \cf6 \strokec6 "text-gray-600 text-sm leading-relaxed font-medium"\cf0 \strokec4  \}) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 const\cf0 \strokec4  [isExpanded, setIsExpanded] = useState(\cf2 \strokec2 false\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 if\cf0 \strokec4  (!text || text.length === \cf8 \strokec8 0\cf0 \strokec4 ) \cf2 \strokec2 return\cf0 \strokec4  \cf2 \strokec2 null\cf0 \strokec4 ;\cb1 \
-\cb3   \cf2 \strokec2 if\cf0 \strokec4  (text.length <= maxLength) \cf2 \strokec2 return\cf0 \strokec4  <p className=\{\cf6 \strokec6 `\cf0 \strokec4 $\{className\}\cf6 \strokec6  whitespace-pre-wrap`\cf0 \strokec4 \}>\{text\}</p>;\cb1 \
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3     <div className=\{className\}>\cb1 \
-\cb3       <span className=\cf6 \strokec6 "whitespace-pre-wrap"\cf0 \strokec4 >\{isExpanded ? text : \cf6 \strokec6 `\cf0 \strokec4 $\{text.substring(\cf8 \strokec8 0\cf0 \strokec4 , maxLength).trim()\}\cf6 \strokec6 ...`\cf0 \strokec4 \}</span>\cb1 \
-\cb3       <button onClick=\{(e) => \{ e.stopPropagation(); setIsExpanded(!isExpanded); \}\} className=\cf6 \strokec6 "ml-2 text-[#ED4E23] font-bold hover:underline inline-flex items-center"\cf0 \strokec4 >\cb1 \
-\cb3         \{isExpanded ? \cf6 \strokec6 'See less'\cf0 \strokec4  : \cf6 \strokec6 'See more'\cf0 \strokec4 \}\cb1 \
-\cb3       </button>\cb1 \
-\cb3     </div>\cb1 \
-\cb3   );\cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  \cf5 \strokec5 DaySelector\cf0 \strokec4 (\{ selectedDay, onDayChange \}) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 const\cf0 \strokec4  days = [\cf6 \strokec6 'Friday'\cf0 \strokec4 , \cf6 \strokec6 'Saturday'\cf0 \strokec4 , \cf6 \strokec6 'Sunday'\cf0 \strokec4 ];\cb1 \
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3     <div className=\cf6 \strokec6 "sticky top-0 bg-[#FCF5EB]/95 backdrop-blur-sm z-10 py-4 border-b border-[#E8BA21]/20 -mx-6 px-6 mb-6"\cf0 \strokec4 >\cb1 \
-\cb3       <div className=\cf6 \strokec6 "flex bg-white/50 p-1 rounded-2xl border border-gray-100 shadow-sm"\cf0 \strokec4 >\cb1 \
-\cb3         \{days.map(day => (\cb1 \
-\cb3           <button\cb1 \
-\cb3             key=\{day\}\cb1 \
-\cb3             onClick=\{() => onDayChange(day)\}\cb1 \
-\cb3             className=\{\cf6 \strokec6 `flex-1 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-widest \cf0 \strokec4 $\{selectedDay === day ? \cf6 \strokec6 'bg-[#4563AD] text-white shadow-md'\cf0 \strokec4  : \cf6 \strokec6 'text-gray-400 hover:text-gray-600'\cf0 \strokec4 \}\cf6 \strokec6 `\cf0 \strokec4 \}\cb1 \
-\cb3           >\cb1 \
-\cb3             \{day\}\cb1 \
-\cb3           </button>\cb1 \
-\cb3         ))\}\cb1 \
-\cb3       </div>\cb1 \
-\cb3     </div>\cb1 \
-\cb3   );\cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 function\cf0 \strokec4  \cf5 \strokec5 WorkshopDetailView\cf0 \strokec4 (\{ workshop, onBack \}) \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 if\cf0 \strokec4  (!workshop) \cf2 \strokec2 return\cf0 \strokec4  \cf2 \strokec2 null\cf0 \strokec4 ;\cb1 \
-\
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3     <div className=\cf6 \strokec6 "flex flex-col min-h-full bg-[#FCF5EB] animate-in slide-in-from-right-8 duration-300 pb-8 text-left text-balance"\cf0 \strokec4 >\cb1 \
-\cb3       <div className=\cf6 \strokec6 "p-4 border-b border-[#E8BA21]/20 flex items-center gap-2 sticky top-0 bg-[#FCF5EB]/90 backdrop-blur-sm z-10"\cf0 \strokec4 >\cb1 \
-\cb3         <button onClick=\{onBack\} className=\cf6 \strokec6 "p-2 -ml-2 text-[#4563AD] hover:bg-[#4563AD]/10 rounded-full transition-colors"\cf0 \strokec4 ><\cf5 \strokec5 ChevronLeft\cf0 \strokec4  size=\{\cf8 \strokec8 24\cf0 \strokec4 \} /></button>\cb1 \
-\cb3         <span className=\cf6 \strokec6 "font-extrabold text-[#4563AD] text-sm uppercase tracking-wider"\cf0 \strokec4 >\cf5 \strokec5 Session\cf0 \strokec4  \cf5 \strokec5 Details\cf0 \strokec4 </span>\cb1 \
-\cb3       </div>\cb1 \
-\cb3       <div className=\cf6 \strokec6 "p-6"\cf0 \strokec4 >\cb1 \
-\cb3         <h1 className=\cf6 \strokec6 "text-3xl font-extrabold text-gray-900 leading-tight mb-2 font-serif"\cf0 \strokec4 >\{workshop.title || \cf6 \strokec6 'Untitled Session'\cf0 \strokec4 \}</h1>\cb1 \
-\cb3         <p className=\cf6 \strokec6 "text-lg font-bold text-[#ED4E23]"\cf0 \strokec4 >by \{workshop.speaker || \cf6 \strokec6 'TBA'\cf0 \strokec4 \}</p>\cb1 \
-\cb3         \cb1 \
-\cb3         <div className=\cf6 \strokec6 "prose prose-sm text-gray-600 font-medium leading-relaxed bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm my-8"\cf0 \strokec4 >\cb1 \
-\cb3           <h3 className=\cf6 \strokec6 "text-gray-900 font-bold mb-3 text-lg font-serif"\cf0 \strokec4 >\cf5 \strokec5 About\cf0 \strokec4  \cf2 \strokec2 this\cf0 \strokec4  session</h3>\cb1 \
-\cb3           \{workshop.description ? (\cb1 \
-\cb3             <\cf5 \strokec5 ExpandableText\cf0 \strokec4  text=\{workshop.description\} maxLength=\{\cf8 \strokec8 3000\cf0 \strokec4 \} />\cb1 \
-\cb3           ) : (\cb1 \
-\cb3             <p className=\cf6 \strokec6 "italic text-gray-400"\cf0 \strokec4 >\cf5 \strokec5 Description\cf0 \strokec4  coming soon...</p>\cb1 \
-\cb3           )\}\cb1 \
-\cb3         </div>\cb1 \
-\
-\cb3         <div className=\cf6 \strokec6 "bg-white p-6 rounded-[2rem] border border-[#4563AD]/10 shadow-sm relative overflow-hidden"\cf0 \strokec4 >\cb1 \
-\cb3           <div className=\cf6 \strokec6 "absolute top-0 right-0 w-24 h-24 bg-[#E8BA21]/10 rounded-bl-full -z-0"\cf0 \strokec4 ></div>\cb1 \
-\cb3           <h3 className=\cf6 \strokec6 "text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10"\cf0 \strokec4 >\cf5 \strokec5 About\cf0 \strokec4  the \cf5 \strokec5 Speaker\cf0 \strokec4 </h3>\cb1 \
-\cb3           <div className=\cf6 \strokec6 "flex items-start gap-4 relative z-10"\cf0 \strokec4 >\cb1 \
-\cb3             <div className=\cf6 \strokec6 "w-16 h-16 rounded-full bg-[#FCF5EB] border-2 border-[#ED4E23] overflow-hidden shrink-0 flex items-center justify-center font-bold text-[#ED4E23] text-2xl shadow-sm"\cf0 \strokec4 >\cb1 \
-\cb3               \{(workshop.speaker || \cf6 \strokec6 'T'\cf0 \strokec4 ).charAt(\cf8 \strokec8 0\cf0 \strokec4 )\}\cb1 \
-\cb3             </div>\cb1 \
-\cb3             <div className=\cf6 \strokec6 "flex-1"\cf0 \strokec4 >\cb1 \
-\cb3               <h4 className=\cf6 \strokec6 "font-extrabold text-gray-900 text-base leading-tight"\cf0 \strokec4 >\{workshop.speaker || \cf6 \strokec6 'To be announced'\cf0 \strokec4 \}</h4>\cb1 \
-\cb3               \{workshop.biography ? (\cb1 \
-\cb3                 <\cf5 \strokec5 ExpandableText\cf0 \strokec4  text=\{workshop.biography\} maxLength=\{\cf8 \strokec8 250\cf0 \strokec4 \} className=\cf6 \strokec6 "text-sm text-gray-600 mt-1.5 leading-relaxed font-medium"\cf0 \strokec4  />\cb1 \
-\cb3               ) : (\cb1 \
-\cb3                 <p className=\cf6 \strokec6 "text-sm text-gray-400 mt-1.5 italic"\cf0 \strokec4 >\cf5 \strokec5 Biography\cf0 \strokec4  coming soon...</p>\cb1 \
-\cb3               )\}\cb1 \
-\cb3             </div>\cb1 \
-\cb3           </div>\cb1 \
-\cb3         </div>\cb1 \
-\cb3       </div>\cb1 \
-\cb3     </div>\cb1 \
-\cb3   );\cb1 \
-\cb3 \}\cb1 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf7 \cb3 \strokec7 // --- MAIN APP ---\cf0 \cb1 \strokec4 \
-\
-\pard\pardeftab720\partightenfactor0
-\cf2 \cb3 \strokec2 export\cf0 \strokec4  \cf2 \strokec2 default\cf0 \strokec4  \cf2 \strokec2 function\cf0 \strokec4  \cf5 \strokec5 App\cf0 \strokec4 () \{\cb1 \
-\pard\pardeftab720\partightenfactor0
-\cf0 \cb3   \cf2 \strokec2 const\cf0 \strokec4  [currentUser, setCurrentUser] = useState(\cf2 \strokec2 null\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [selectedWorkshopId, setSelectedWorkshopId] = useState(\cf2 \strokec2 null\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [activeTab, setActiveTab] = useState(\cf6 \strokec6 'my-wish'\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [email, setEmail] = useState(\cf6 \strokec6 ''\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [isLoading, setIsLoading] = useState(\cf2 \strokec2 false\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [error, setError] = useState(\cf6 \strokec6 ''\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [matchingUsers, setMatchingUsers] = useState([]);\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [searchTerm, setSearchTerm] = useState(\cf6 \strokec6 ''\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [activeCategory, setActiveCategory] = useState(\cf6 \strokec6 'All'\cf0 \strokec4 );\cb1 \
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  [selectedDay, setSelectedDay] = useState(\cf6 \strokec6 'Friday'\cf0 \strokec4 );\cb1 \
-\
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  categories = [\cf6 \strokec6 'All'\cf0 \strokec4 , ...\cf2 \strokec2 new\cf0 \strokec4  \cf5 \strokec5 Set\cf0 \strokec4 (\cf5 \strokec5 WORKSHOPS_DATA\cf0 \strokec4 .map(w => w.category).filter(\cf5 \strokec5 Boolean\cf0 \strokec4 ))];\cb1 \
-\
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  handleLogin = \cf2 \strokec2 async\cf0 \strokec4  (e) => \{\cb1 \
-\cb3     e.preventDefault();\cb1 \
-\cb3     \cf2 \strokec2 if\cf0 \strokec4  (!email.trim()) \cf2 \strokec2 return\cf0 \strokec4 ;\cb1 \
-\cb3     setIsLoading(\cf2 \strokec2 true\cf0 \strokec4 );\cb1 \
-\cb3     setError(\cf6 \strokec6 ''\cf0 \strokec4 );\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  emailStr = email.trim().toLowerCase();\cb1 \
-\cb3     \cb1 \
-\cb3     \cf2 \strokec2 try\cf0 \strokec4  \{\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  response = \cf2 \strokec2 await\cf0 \strokec4  fetch(\cf5 \strokec5 LINKS\cf0 \strokec4 .itineraries);\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  csvText = \cf2 \strokec2 await\cf0 \strokec4  response.text();\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  data = parseCSV(csvText);\cb1 \
-\cb3       \cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  users = data.filter(row => \{\cb1 \
-\cb3         \cf2 \strokec2 const\cf0 \strokec4  rowEmail = getSafeField(row, \cf6 \strokec6 'Email'\cf0 \strokec4 ).toLowerCase();\cb1 \
-\cb3         \cf2 \strokec2 return\cf0 \strokec4  rowEmail === emailStr;\cb1 \
-\cb3       \});\cb1 \
-\
-\cb3       \cf2 \strokec2 if\cf0 \strokec4  (users.length === \cf8 \strokec8 1\cf0 \strokec4 ) \{\cb1 \
-\cb3         processUser(users[\cf8 \strokec8 0\cf0 \strokec4 ]);\cb1 \
-\cb3       \} \cf2 \strokec2 else\cf0 \strokec4  \cf2 \strokec2 if\cf0 \strokec4  (users.length > \cf8 \strokec8 1\cf0 \strokec4 ) \{\cb1 \
-\cb3         setMatchingUsers(users);\cb1 \
-\cb3       \} \cf2 \strokec2 else\cf0 \strokec4  \{\cb1 \
-\cb3         setError(\cf6 \strokec6 "Registration not found. Please check your spelling."\cf0 \strokec4 );\cb1 \
-\cb3       \}\cb1 \
-\cb3     \} \cf2 \strokec2 catch\cf0 \strokec4  (err) \{\cb1 \
-\cb3       setError(\cf6 \strokec6 "Unable to sync. Please check your internet connection."\cf0 \strokec4 );\cb1 \
-\cb3     \} \cf2 \strokec2 finally\cf0 \strokec4  \{\cb1 \
-\cb3       setIsLoading(\cf2 \strokec2 false\cf0 \strokec4 );\cb1 \
-\cb3     \}\cb1 \
-\cb3   \};\cb1 \
-\
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  processUser = (row) => \{\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  fName = getSafeField(row, \cf6 \strokec6 'Name (First)'\cf0 \strokec4 );\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  lName = getSafeField(row, \cf6 \strokec6 'Name (Last)'\cf0 \strokec4 );\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  emailAddr = getSafeField(row, \cf6 \strokec6 'Email'\cf0 \strokec4 );\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  fullName = \cf6 \strokec6 `\cf0 \strokec4 $\{fName\}\cf6 \strokec6  \cf0 \strokec4 $\{lName\}\cf6 \strokec6 `\cf0 \strokec4 .trim() || emailAddr.split(\cf6 \strokec6 '@'\cf0 \strokec4 )[\cf8 \strokec8 0\cf0 \strokec4 ];\cb1 \
-\cb3     \cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  userWorkshops = \{\};\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  identityKeys = [\cf6 \strokec6 'email'\cf0 \strokec4 , \cf6 \strokec6 'name(first)'\cf0 \strokec4 , \cf6 \strokec6 'name(last)'\cf0 \strokec4 , \cf6 \strokec6 'name'\cf0 \strokec4 ];\cb1 \
-\cb3     \cf5 \strokec5 Object\cf0 \strokec4 .keys(row).forEach(key => \{\cb1 \
-\cb3       \cf2 \strokec2 const\cf0 \strokec4  val = (row[key] || \cf6 \strokec6 ''\cf0 \strokec4 ).toString().trim().toLowerCase();\cb1 \
-\cb3       \cf2 \strokec2 if\cf0 \strokec4  (!identityKeys.includes(key.trim().toLowerCase()) && val) \{\cb1 \
-\cb3         userWorkshops[key.trim().toLowerCase()] = val;\cb1 \
-\cb3       \}\cb1 \
-\cb3     \});\cb1 \
-\
-\cb3     setCurrentUser(\{ name: fullName, workshops: userWorkshops \});\cb1 \
-\cb3     setMatchingUsers([]);\cb1 \
-\cb3     setSelectedDay(\cf6 \strokec6 'Saturday'\cf0 \strokec4 );\cb1 \
-\cb3   \};\cb1 \
-\
-\cb3   \cf2 \strokec2 const\cf0 \strokec4  filteredWorkshops = \cf5 \strokec5 WORKSHOPS_DATA\cf0 \strokec4 .filter(w => \{\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  title = w.title.toLowerCase();\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  speaker = w.speaker.toLowerCase();\cb1 \
-\cb3     \cf2 \strokec2 const\cf0 \strokec4  search = searchTerm.toLowerCase();\cb1 \
-\cb3     \cf2 \strokec2 return\cf0 \strokec4  title.includes(search) || speaker.includes(search);\cb1 \
-\cb3   \});\cb1 \
-\
-\cb3   \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3     <div className=\cf6 \strokec6 "min-h-screen bg-slate-100 flex justify-center items-center font-sans text-gray-900 selection:bg-[#E8BA21]/30 p-0 sm:p-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3       <div className=\cf6 \strokec6 "w-full h-screen sm:max-h-[850px] sm:max-w-[440px] bg-[#FCF5EB] sm:rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col sm:border-[8px] sm:border-gray-900 animate-in fade-in duration-500"\cf0 \strokec4 >\cb1 \
-\cb3         \cb1 \
-\cb3         <header className=\cf6 \strokec6 "bg-[#FCF5EB] border-b border-[#E8BA21]/20 p-5 flex justify-between items-center z-20 shadow-sm shrink-0"\cf0 \strokec4 >\cb1 \
-\cb3           <img src=\{\cf5 \strokec5 LOGO_URL\cf0 \strokec4 \} className=\cf6 \strokec6 "h-9 object-contain"\cf0 \strokec4  alt=\cf6 \strokec6 "Logo"\cf0 \strokec4  />\cb1 \
-\cb3           \{currentUser && (\cb1 \
-\cb3             <div className=\cf6 \strokec6 "w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-200 font-bold text-sm text-[#4563AD] uppercase shadow-sm"\cf0 \strokec4 >\cb1 \
-\cb3               \{currentUser.name.charAt(\cf8 \strokec8 0\cf0 \strokec4 )\}\cb1 \
-\cb3             </div>\cb1 \
-\cb3           )\}\cb1 \
-\cb3         </header>\cb1 \
-\
-\cb3         <main className=\cf6 \strokec6 "flex-1 overflow-y-auto bg-[#FCF5EB] relative scroll-smooth text-balance"\cf0 \strokec4 >\cb1 \
-\cb3           \{selectedWorkshopId ? (\cb1 \
-\cb3             <\cf5 \strokec5 WorkshopDetailView\cf0 \strokec4  \cb1 \
-\cb3               workshop=\{\cf5 \strokec5 WORKSHOPS_DATA\cf0 \strokec4 .find(w => w.id.toLowerCase() === selectedWorkshopId.toLowerCase())\} \cb1 \
-\cb3               onBack=\{() => setSelectedWorkshopId(\cf2 \strokec2 null\cf0 \strokec4 )\} \cb1 \
-\cb3             />\cb1 \
-\cb3           ) : (\cb1 \
-\cb3             <div className=\cf6 \strokec6 "p-6 pb-24"\cf0 \strokec4 >\cb1 \
-\cb3               \{\cf7 \strokec7 /* TAB: MY WISH */\cf0 \strokec4 \}\cb1 \
-\cb3               \{activeTab === \cf6 \strokec6 'my-wish'\cf0 \strokec4  && (\cb1 \
-\cb3                 currentUser ? (\cb1 \
-\cb3                   <div className=\cf6 \strokec6 "space-y-10 animate-in slide-in-from-bottom-4"\cf0 \strokec4 >\cb1 \
-\cb3                     <div className=\cf6 \strokec6 "flex justify-between items-end"\cf0 \strokec4 >\cb1 \
-\cb3                       <div>\cb1 \
-\cb3                         <h2 className=\cf6 \strokec6 "text-3xl font-extrabold text-[#ED4E23] font-serif"\cf0 \strokec4 >\cf5 \strokec5 My\cf0 \strokec4  \cf5 \strokec5 WISH\cf0 \strokec4 </h2>\cb1 \
-\cb3                         <p className=\cf6 \strokec6 "text-xs text-gray-500 font-bold uppercase mt-1"\cf0 \strokec4 >\cf5 \strokec5 Hello\cf0 \strokec4 , \{currentUser.name\}</p>\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                       <button onClick=\{() => setCurrentUser(\cf2 \strokec2 null\cf0 \strokec4 )\} className=\cf6 \strokec6 "text-[10px] font-bold text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-200 uppercase tracking-widest"\cf0 \strokec4 >\cf5 \strokec5 Logout\cf0 \strokec4 </button>\cb1 \
-\cb3                     </div>\cb1 \
-\
-\cb3                     <\cf5 \strokec5 DaySelector\cf0 \strokec4  selectedDay=\{selectedDay\} onDayChange=\{setSelectedDay\} />\cb1 \
-\
-\cb3                     \{\cf5 \strokec5 MASTER_SCHEDULE\cf0 \strokec4 .filter(day => day.date === selectedDay).map((day) => (\cb1 \
-\cb3                       <div key=\{\cf6 \strokec6 `personal-day-\cf0 \strokec4 $\{day.date\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "animate-in fade-in duration-300"\cf0 \strokec4 >\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "space-y-4"\cf0 \strokec4 >\cb1 \
-\cb3                           \{day.events.map((event) => \{\cb1 \
-\cb3                             \cf2 \strokec2 const\cf0 \strokec4  userWorkshopCode = currentUser.workshops[event.id.toLowerCase()] || \cf6 \strokec6 ''\cf0 \strokec4 ;\cb1 \
-\cb3                             \cf2 \strokec2 const\cf0 \strokec4  workshop = \cf5 \strokec5 WORKSHOPS_DATA\cf0 \strokec4 .find(w => w.id.toLowerCase() === userWorkshopCode.toLowerCase());\cb1 \
-\cb3                             \cf2 \strokec2 const\cf0 \strokec4  isSlot = event.\cf2 \strokec2 type\cf0 \strokec4  === \cf6 \strokec6 'workshop_slot'\cf0 \strokec4 ;\cb1 \
-\cb3                             \cf2 \strokec2 const\cf0 \strokec4  isH = isSlot && workshop;\cb1 \
-\cb3                             \cf2 \strokec2 const\cf0 \strokec4  isEmptySlot = isSlot && !workshop;\cb1 \
-\cb3                             \cb1 \
-\cb3                             \cf2 \strokec2 return\cf0 \strokec4  (\cb1 \
-\cb3                               <div key=\{\cf6 \strokec6 `personal-ev-\cf0 \strokec4 $\{event.id\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "flex gap-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                                 <div className=\cf6 \strokec6 "w-16 shrink-0 pt-1.5 text-right font-bold text-gray-900 text-sm"\cf0 \strokec4 >\{event.time\}</div>\cb1 \
-\cb3                                 <div \cb1 \
-\cb3                                   className=\{\cf6 \strokec6 `flex-1 p-4 rounded-2xl border transition-all \cf0 \strokec4 $\{isH ? \cf6 \strokec6 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]'\cf0 \strokec4  : \cf6 \strokec6 'bg-white border-gray-100 shadow-sm'\cf0 \strokec4 \}\cf6 \strokec6  relative overflow-hidden`\cf0 \strokec4 \}\cb1 \
-\cb3                                   onClick=\{() => isH ? setSelectedWorkshopId(workshop.id) : \cf2 \strokec2 null\cf0 \strokec4 \}\cb1 \
-\cb3                                 >\cb1 \
-\cb3                                   \{(isH || event.\cf2 \strokec2 type\cf0 \strokec4  === \cf6 \strokec6 'main'\cf0 \strokec4  || event.title === \cf6 \strokec6 'Night Market'\cf0 \strokec4 ) && <div className=\{\cf6 \strokec6 `absolute top-0 left-0 w-1.5 h-full \cf0 \strokec4 $\{(event.\cf2 \strokec2 type\cf0 \strokec4  === \cf6 \strokec6 'main'\cf0 \strokec4  || event.title === \cf6 \strokec6 'Night Market'\cf0 \strokec4 ) ? \cf6 \strokec6 'bg-[#4563AD]'\cf0 \strokec4  : \cf6 \strokec6 'bg-[#E8BA21]'\cf0 \strokec4 \}\cf6 \strokec6 `\cf0 \strokec4 \} />\}\cb1 \
-\cb3                                   <h4 className=\{\cf6 \strokec6 `font-bold text-gray-900 leading-snug \cf0 \strokec4 $\{isEmptySlot ? \cf6 \strokec6 'italic text-gray-400'\cf0 \strokec4  : \cf6 \strokec6 ''\cf0 \strokec4 \}\cf6 \strokec6 `\cf0 \strokec4 \}>\cb1 \
-\cb3                                     \{workshop ? workshop.title : (isEmptySlot ? \cf6 \strokec6 'Choice Pending'\cf0 \strokec4  : event.title)\}\cb1 \
-\cb3                                   </h4>\cb1 \
-\cb3                                   \{workshop && <p className=\cf6 \strokec6 "text-xs text-[#ED4E23] mt-1 font-bold"\cf0 \strokec4 >\cf2 \strokec2 with\cf0 \strokec4  \{workshop.speaker\}</p>\}\cb1 \
-\cb3                                   <div className=\cf6 \strokec6 "flex items-center gap-1.5 mt-2 text-xs text-gray-500 font-semibold uppercase tracking-wider"\cf0 \strokec4 ><\cf5 \strokec5 MapPin\cf0 \strokec4  size=\{\cf8 \strokec8 13\cf0 \strokec4 \} /> \{event.location || \cf6 \strokec6 'TBA'\cf0 \strokec4 \}</div>\cb1 \
-\cb3                                 </div>\cb1 \
-\cb3                               </div>\cb1 \
-\cb3                             );\cb1 \
-\cb3                           \})\}\cb1 \
-\cb3                         </div>\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     ))\}\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                 ) : (\cb1 \
-\cb3                   <div className=\cf6 \strokec6 "animate-in fade-in duration-500"\cf0 \strokec4 >\cb1 \
-\cb3                     \{matchingUsers.length > \cf8 \strokec8 0\cf0 \strokec4  ? (\cb1 \
-\cb3                       <div className=\cf6 \strokec6 "pt-10"\cf0 \strokec4 >\cb1 \
-\cb3                         <button onClick=\{() => setMatchingUsers([])\} className=\cf6 \strokec6 "mb-4 text-xs font-bold text-[#4563AD] flex items-center gap-1"\cf0 \strokec4 ><\cf5 \strokec5 ChevronLeft\cf0 \strokec4  size=\{\cf8 \strokec8 14\cf0 \strokec4 \}/> \cf5 \strokec5 Back\cf0 \strokec4 </button>\cb1 \
-\cb3                         <h2 className=\cf6 \strokec6 "text-2xl font-extrabold text-[#4563AD] mb-2 font-serif"\cf0 \strokec4 >\cf5 \strokec5 Select\cf0 \strokec4  \cf5 \strokec5 Person\cf0 \strokec4 </h2>\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "space-y-3 mt-4"\cf0 \strokec4 >\cb1 \
-\cb3                           \{matchingUsers.map((u, i) => (\cb1 \
-\cb3                             <button key=\{\cf6 \strokec6 `user-choice-\cf0 \strokec4 $\{i\}\cf6 \strokec6 `\cf0 \strokec4 \} onClick=\{() => processUser(u)\} className=\cf6 \strokec6 "w-full p-4 bg-white border border-[#E8BA21]/30 rounded-2xl flex items-center justify-between group active:scale-95 transition-transform shadow-sm"\cf0 \strokec4 >\cb1 \
-\cb3                               <span className=\cf6 \strokec6 "font-bold text-gray-800"\cf0 \strokec4 >\{(getSafeField(u, \cf6 \strokec6 'Name (First)'\cf0 \strokec4 ) + \cf6 \strokec6 ' '\cf0 \strokec4  + getSafeField(u, \cf6 \strokec6 'Name (Last)'\cf0 \strokec4 )).trim() || getSafeField(u, \cf6 \strokec6 'Email'\cf0 \strokec4 )\}</span>\cb1 \
-\cb3                               <\cf5 \strokec5 ChevronRight\cf0 \strokec4  size=\{\cf8 \strokec8 18\cf0 \strokec4 \} className=\cf6 \strokec6 "text-[#E8BA21]"\cf0 \strokec4  />\cb1 \
-\cb3                             </button>\cb1 \
-\cb3                           ))\}\cb1 \
-\cb3                         </div>\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     ) : (\cb1 \
-\cb3                       <div className=\cf6 \strokec6 "flex flex-col text-left"\cf0 \strokec4 >\cb1 \
-\cb3                         \{\cf7 \strokec7 /* Welcome Hero Section */\cf0 \strokec4 \}\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "pt-8 pb-10 border-b border-gray-100 mb-8"\cf0 \strokec4 >\cb1 \
-\cb3                           <div className=\cf6 \strokec6 "inline-flex items-center gap-2 bg-[#4563AD]/10 text-[#4563AD] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4"\cf0 \strokec4 >\cb1 \
-\cb3                             <\cf5 \strokec5 Sparkles\cf0 \strokec4  size=\{\cf8 \strokec8 12\cf0 \strokec4 \} /> \cf5 \strokec5 WISH\cf0 \strokec4  \cf5 \strokec5 CONFERENCE\cf0 \strokec4  \cf6 \strokec6 '26\cf0 \cb1 \strokec4 \
-\cb3                           </div>\cb1 \
-\cb3                           <h1 className=\cf6 \strokec6 "text-4xl font-extrabold text-gray-900 leading-tight font-serif mb-4"\cf0 \strokec4 >\cb1 \
-\cb3                             \cf5 \strokec5 Welcome\cf0 \strokec4  to <span className=\cf6 \strokec6 "text-[#ED4E23]"\cf0 \strokec4 >\cf5 \strokec5 WISH\cf0 \strokec4 </span>\cb1 \
-\cb3                           </h1>\cb1 \
-\cb3                           <p className=\cf6 \strokec6 "text-sm text-[#4563AD] font-bold leading-relaxed mb-6"\cf0 \strokec4 >\cb1 \
-\cb3                             \{\cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4 .tagline\}\cb1 \
-\cb3                           </p>\cb1 \
-\cb3                           <div className=\cf6 \strokec6 "flex flex-col gap-3"\cf0 \strokec4 >\cb1 \
-\cb3                             <div className=\cf6 \strokec6 "flex items-center gap-3 text-gray-500"\cf0 \strokec4 >\cb1 \
-\cb3                               <div className=\cf6 \strokec6 "w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm text-[#E8BA21]"\cf0 \strokec4 >\cb1 \
-\cb3                                 <\cf5 \strokec5 Calendar\cf0 \strokec4  size=\{\cf8 \strokec8 16\cf0 \strokec4 \} />\cb1 \
-\cb3                               </div>\cb1 \
-\cb3                               <span className=\cf6 \strokec6 "text-sm font-semibold"\cf0 \strokec4 >\{\cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4 .dates\}</span>\cb1 \
-\cb3                             </div>\cb1 \
-\cb3                             \cb1 \
-\cb3                             \{\cf7 \strokec7 /* Clickable Address Button */\cf0 \strokec4 \}\cb1 \
-\cb3                             <a \cb1 \
-\cb3                               href=\{\cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4 .googleMapsUrl\}\cb1 \
-\cb3                               target=\cf6 \strokec6 "_blank"\cf0 \cb1 \strokec4 \
-\cb3                               rel=\cf6 \strokec6 "noopener noreferrer"\cf0 \cb1 \strokec4 \
-\cb3                               className=\cf6 \strokec6 "flex items-center gap-3 text-gray-500 hover:text-[#4563AD] transition-all group"\cf0 \cb1 \strokec4 \
-\cb3                             >\cb1 \
-\cb3                               <div className=\cf6 \strokec6 "w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm text-[#E8BA21] group-hover:text-[#4563AD] group-hover:border-[#4563AD]/20 transition-colors"\cf0 \strokec4 >\cb1 \
-\cb3                                 <\cf5 \strokec5 MapPin\cf0 \strokec4  size=\{\cf8 \strokec8 16\cf0 \strokec4 \} />\cb1 \
-\cb3                               </div>\cb1 \
-\cb3                               <div className=\cf6 \strokec6 "flex flex-col"\cf0 \strokec4 >\cb1 \
-\cb3                                 <span className=\cf6 \strokec6 "text-sm font-semibold group-hover:underline"\cf0 \strokec4 >\{\cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4 .locationName\}</span>\cb1 \
-\cb3                                 <span className=\cf6 \strokec6 "text-[10px] text-gray-400 font-medium group-hover:text-[#4563AD]/70"\cf0 \strokec4 >\{\cf5 \strokec5 CONFERENCE_INFO\cf0 \strokec4 .address\}</span>\cb1 \
-\cb3                               </div>\cb1 \
-\cb3                               <\cf5 \strokec5 ChevronRight\cf0 \strokec4  size=\{\cf8 \strokec8 14\cf0 \strokec4 \} className=\cf6 \strokec6 "ml-auto text-gray-300 group-hover:text-[#4563AD]"\cf0 \strokec4  />\cb1 \
-\cb3                             </a>\cb1 \
-\cb3                           </div>\cb1 \
-\cb3                         </div>\cb1 \
-\
-\cb3                         \{\cf7 \strokec7 /* Sign In Section */\cf0 \strokec4 \}\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm"\cf0 \strokec4 >\cb1 \
-\cb3                           <h2 className=\cf6 \strokec6 "text-xl font-extrabold text-gray-900 mb-2"\cf0 \strokec4 >\cf5 \strokec5 Access\cf0 \strokec4  \cf5 \strokec5 Your\cf0 \strokec4  \cf5 \strokec5 Itinerary\cf0 \strokec4 </h2>\cb1 \
-\cb3                           <p className=\cf6 \strokec6 "text-xs text-gray-400 font-medium mb-6"\cf0 \strokec4 >\cf5 \strokec5 Enter\cf0 \strokec4  your registered email to load your personalized workshop schedule and room assignments.</p>\cb1 \
-\cb3                           <form onSubmit=\{handleLogin\} className=\cf6 \strokec6 "space-y-4"\cf0 \strokec4 >\cb1 \
-\cb3                             <input \cb1 \
-\cb3                               \cf2 \strokec2 type\cf0 \strokec4 =\cf6 \strokec6 "email"\cf0 \strokec4  \cb1 \
-\cb3                               value=\{email\} \cb1 \
-\cb3                               onChange=\{e => setEmail(e.target.value)\} \cb1 \
-\cb3                               placeholder=\cf6 \strokec6 "Email address"\cf0 \strokec4  \cb1 \
-\cb3                               className=\cf6 \strokec6 "w-full p-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-[#E8BA21] outline-none text-gray-900 font-medium text-sm transition-all"\cf0 \strokec4  \cb1 \
-\cb3                               required \cb1 \
-\cb3                             />\cb1 \
-\cb3                             \{error && <div className=\cf6 \strokec6 "text-red-500 text-[10px] font-bold bg-red-50 p-3 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-1"\cf0 \strokec4 ><\cf5 \strokec5 AlertCircle\cf0 \strokec4  size=\{\cf8 \strokec8 14\cf0 \strokec4 \}/> \{error\}</div>\}\cb1 \
-\cb3                             <button \cf2 \strokec2 type\cf0 \strokec4 =\cf6 \strokec6 "submit"\cf0 \strokec4  disabled=\{isLoading\} className=\cf6 \strokec6 "w-full bg-[#ED4E23] text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-[#ED4E23]/20 hover:bg-[#ED4E23]/90 active:scale-95 transition-all flex items-center justify-center gap-2"\cf0 \strokec4 >\cb1 \
-\cb3                               \{isLoading ? \cf6 \strokec6 "Syncing..."\cf0 \strokec4  : <>\cf5 \strokec5 Get\cf0 \strokec4  \cf5 \strokec5 My\cf0 \strokec4  \cf5 \strokec5 Schedule\cf0 \strokec4  <\cf5 \strokec5 ChevronRight\cf0 \strokec4  size=\{\cf8 \strokec8 18\cf0 \strokec4 \}/></>\}\cb1 \
-\cb3                             </button>\cb1 \
-\cb3                           </form>\cb1 \
-\cb3                         </div>\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     )\}\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                 )\cb1 \
-\cb3               )\}\cb1 \
-\
-\cb3               \{\cf7 \strokec7 /* TAB: SCHEDULE */\cf0 \strokec4 \}\cb1 \
-\cb3               \{activeTab === \cf6 \strokec6 'schedule'\cf0 \strokec4  && (\cb1 \
-\cb3                 <div className=\cf6 \strokec6 "animate-in slide-in-from-bottom-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                   <div className=\cf6 \strokec6 "mb-6"\cf0 \strokec4 >\cb1 \
-\cb3                     <h2 className=\cf6 \strokec6 "text-3xl font-extrabold text-[#ED4E23] font-serif"\cf0 \strokec4 >\cf5 \strokec5 Conference\cf0 \strokec4 </h2>\cb1 \
-\cb3                     <p className=\cf6 \strokec6 "text-xs text-gray-500 font-bold uppercase mt-1"\cf0 \strokec4 >\cf5 \strokec5 Master\cf0 \strokec4  \cf5 \strokec5 Schedule\cf0 \strokec4 </p>\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                   \cb1 \
-\cb3                   <\cf5 \strokec5 DaySelector\cf0 \strokec4  selectedDay=\{selectedDay\} onDayChange=\{setSelectedDay\} />\cb1 \
-\
-\cb3                   \{\cf5 \strokec5 MASTER_SCHEDULE\cf0 \strokec4 .filter(day => day.date === selectedDay).map((day) => (\cb1 \
-\cb3                     <div key=\{\cf6 \strokec6 `master-day-\cf0 \strokec4 $\{day.date\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "animate-in fade-in duration-300"\cf0 \strokec4 >\cb1 \
-\cb3                       <div className=\cf6 \strokec6 "space-y-4"\cf0 \strokec4 >\cb1 \
-\cb3                         \{day.events.map((event) => (\cb1 \
-\cb3                           <div key=\{\cf6 \strokec6 `master-ev-\cf0 \strokec4 $\{event.id\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "flex gap-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                             <div className=\cf6 \strokec6 "w-16 shrink-0 pt-1.5 text-right font-bold text-gray-900 text-sm"\cf0 \strokec4 >\{event.time\}</div>\cb1 \
-\cb3                             <div className=\cf6 \strokec6 "flex-1 p-4 rounded-2xl border bg-white border-gray-100 shadow-sm relative overflow-hidden"\cf0 \strokec4 >\cb1 \
-\cb3                               \{(event.\cf2 \strokec2 type\cf0 \strokec4  === \cf6 \strokec6 'main'\cf0 \strokec4  || event.title === \cf6 \strokec6 'Night Market'\cf0 \strokec4 ) && <div className=\cf6 \strokec6 "absolute top-0 left-0 w-1.5 h-full bg-[#4563AD]"\cf0 \strokec4  />\}\cb1 \
-\cb3                               \{event.\cf2 \strokec2 type\cf0 \strokec4  === \cf6 \strokec6 'workshop_slot'\cf0 \strokec4  && <div className=\cf6 \strokec6 "absolute top-0 left-0 w-1.5 h-full bg-[#E8BA21]"\cf0 \strokec4  />\}\cb1 \
-\cb3                               <h4 className=\cf6 \strokec6 "font-bold text-gray-900 leading-tight"\cf0 \strokec4 >\{event.title\}</h4>\cb1 \
-\cb3                               <div className=\cf6 \strokec6 "flex items-center gap-1.5 mt-2 text-xs text-gray-500 font-semibold uppercase tracking-wider"\cf0 \strokec4 ><\cf5 \strokec5 MapPin\cf0 \strokec4  size=\{\cf8 \strokec8 13\cf0 \strokec4 \} /> \{event.location || \cf6 \strokec6 'Multiple Rooms'\cf0 \strokec4 \}</div>\cb1 \
-\cb3                             </div>\cb1 \
-\cb3                           </div>\cb1 \
-\cb3                         ))\}\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     </div>\cb1 \
-\cb3                   ))\}\cb1 \
-\cb3                 </div>\cb1 \
-\cb3               )\}\cb1 \
-\
-\cb3               \{\cf7 \strokec7 /* TAB: WORKSHOPS */\cf0 \strokec4 \}\cb1 \
-\cb3               \{activeTab === \cf6 \strokec6 'workshops'\cf0 \strokec4  && (\cb1 \
-\cb3                 <div className=\cf6 \strokec6 "animate-in slide-in-from-bottom-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                   <div className=\cf6 \strokec6 "mb-6"\cf0 \strokec4 >\cb1 \
-\cb3                     <h2 className=\cf6 \strokec6 "text-3xl font-extrabold text-[#ED4E23] font-serif mb-2"\cf0 \strokec4 >\cf5 \strokec5 Workshops\cf0 \strokec4 </h2>\cb1 \
-\cb3                     <p className=\cf6 \strokec6 "text-sm text-gray-500 font-medium"\cf0 \strokec4 >\cf5 \strokec5 Browse\cf0 \strokec4  available sessions.</p>\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                   \cb1 \
-\cb3                   <div className=\cf6 \strokec6 "relative mb-6"\cf0 \strokec4 >\cb1 \
-\cb3                     <\cf5 \strokec5 Search\cf0 \strokec4  className=\cf6 \strokec6 "absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"\cf0 \strokec4  size=\{\cf8 \strokec8 18\cf0 \strokec4 \} />\cb1 \
-\cb3                     <input \cf2 \strokec2 type\cf0 \strokec4 =\cf6 \strokec6 "text"\cf0 \strokec4  placeholder=\cf6 \strokec6 "Search topics or speakers..."\cf0 \strokec4  className=\cf6 \strokec6 "w-full pl-11 p-4 rounded-2xl border border-[#E8BA21]/30 bg-white outline-none focus:ring-2 focus:ring-[#E8BA21] font-medium text-sm"\cf0 \strokec4  value=\{searchTerm\} onChange=\{e => setSearchTerm(e.target.value)\} />\cb1 \
-\cb3                   </div>\cb1 \
-\
-\cb3                   <div className=\cf6 \strokec6 "space-y-3 mt-2"\cf0 \strokec4 >\cb1 \
-\cb3                     \{filteredWorkshops.map((w) => (\cb1 \
-\cb3                       <div key=\{\cf6 \strokec6 `w-list-\cf0 \strokec4 $\{w.id\}\cf6 \strokec6 `\cf0 \strokec4 \} onClick=\{() => setSelectedWorkshopId(w.id)\} className=\cf6 \strokec6 "bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 hover:border-[#E8BA21]/50 cursor-pointer active:scale-[0.98] transition-all group flex flex-col gap-1 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                         <h3 className=\cf6 \strokec6 "font-extrabold text-xl text-gray-900 leading-tight"\cf0 \strokec4 >\{w.title\}</h3>\cb1 \
-\cb3                         <p className=\cf6 \strokec6 "text-[#ED4E23] text-sm font-bold uppercase tracking-wider"\cf0 \strokec4 >\{w.speaker\}</p>\cb1 \
-\cb3                         \{w.category && (\cb1 \
-\cb3                           <p className=\cf6 \strokec6 "text-[#4563AD] text-[10px] font-extrabold uppercase tracking-widest bg-[#4563AD]/5 inline-block px-2 py-0.5 rounded self-start mt-1 border border-[#4563AD]/10"\cf0 \strokec4 >\{w.category\}</p>\cb1 \
-\cb3                         )\}\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     ))\}\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                 </div>\cb1 \
-\cb3               )\}\cb1 \
-\
-\cb3               \{\cf7 \strokec7 /* TAB: MAP */\cf0 \strokec4 \}\cb1 \
-\cb3               \{activeTab === \cf6 \strokec6 'map'\cf0 \strokec4  && (\cb1 \
-\cb3                 <div className=\cf6 \strokec6 "animate-in slide-in-from-bottom-4 text-left"\cf0 \strokec4 >\cb1 \
-\cb3                   <h2 className=\cf6 \strokec6 "text-3xl font-extrabold text-[#ED4E23] font-serif mb-2 text-left"\cf0 \strokec4 >\cf5 \strokec5 Conference\cf0 \strokec4  \cf5 \strokec5 Locations\cf0 \strokec4 </h2>\cb1 \
-\cb3                   <p className=\cf6 \strokec6 "text-sm text-gray-500 font-medium mb-8 text-left"\cf0 \strokec4 >\cf5 \strokec5 Locate\cf0 \strokec4  your workshop rooms and facilities across our \cf5 \strokec5 Lexton\cf0 \strokec4  \cf5 \strokec5 Road\cf0 \strokec4  locations.</p>\cb1 \
-\cb3                   \cb1 \
-\cb3                   <div className=\cf6 \strokec6 "space-y-6"\cf0 \strokec4 >\cb1 \
-\cb3                     \{\cf5 \strokec5 VENUE_MAP\cf0 \strokec4 .map((location, idx) => (\cb1 \
-\cb3                       <div key=\{\cf6 \strokec6 `loc-\cf0 \strokec4 $\{idx\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden text-left"\cf0 \strokec4 >\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "p-5 flex items-start gap-4 border-b border-gray-50 bg-gray-50/30"\cf0 \strokec4 >\cb1 \
-\cb3                           <div className=\cf6 \strokec6 "w-10 h-10 rounded-xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0"\cf0 \strokec4 >\cb1 \
-\cb3                             \{location.icon\}\cb1 \
-\cb3                           </div>\cb1 \
-\cb3                           <div>\cb1 \
-\cb3                             <h3 className=\cf6 \strokec6 "text-lg font-extrabold text-gray-900"\cf0 \strokec4 >\{location.zone\}</h3>\cb1 \
-\cb3                             <a \cb1 \
-\cb3                               href=\{location.mapUrl\} \cb1 \
-\cb3                               target=\cf6 \strokec6 "_blank"\cf0 \strokec4  \cb1 \
-\cb3                               rel=\cf6 \strokec6 "noopener noreferrer"\cf0 \strokec4  \cb1 \
-\cb3                               className=\cf6 \strokec6 "inline-flex items-center gap-1 text-xs text-[#E8BA21] font-bold mt-0.5 hover:underline group/addr"\cf0 \cb1 \strokec4 \
-\cb3                             >\cb1 \
-\cb3                               \{location.address\}\cb1 \
-\cb3                               <\cf5 \strokec5 ExternalLink\cf0 \strokec4  size=\{\cf8 \strokec8 10\cf0 \strokec4 \} className=\cf6 \strokec6 "text-gray-300 group-hover/addr:text-[#E8BA21]"\cf0 \strokec4  />\cb1 \
-\cb3                             </a>\cb1 \
-\cb3                             <p className=\cf6 \strokec6 "text-[10px] text-gray-400 font-medium mt-1"\cf0 \strokec4 >\{location.description\}</p>\cb1 \
-\cb3                           </div>\cb1 \
-\cb3                         </div>\cb1 \
-\cb3                         <div className=\cf6 \strokec6 "p-4 grid grid-cols-1 gap-2"\cf0 \strokec4 >\cb1 \
-\cb3                           \{location.rooms.map((room, rIdx) => (\cb1 \
-\cb3                             <div key=\{\cf6 \strokec6 `room-\cf0 \strokec4 $\{rIdx\}\cf6 \strokec6 `\cf0 \strokec4 \} className=\cf6 \strokec6 "flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100"\cf0 \strokec4 >\cb1 \
-\cb3                               <span className=\cf6 \strokec6 "text-sm font-bold text-gray-700"\cf0 \strokec4 >\{room.name\}</span>\cb1 \
-\cb3                               <span className=\cf6 \strokec6 "text-[9px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded tracking-wider border border-gray-100"\cf0 \strokec4 >\{room.note\}</span>\cb1 \
-\cb3                             </div>\cb1 \
-\cb3                           ))\}\cb1 \
-\cb3                         </div>\cb1 \
-\cb3                       </div>\cb1 \
-\cb3                     ))\}\cb1 \
-\cb3                   </div>\cb1 \
-\cb3                 </div>\cb1 \
-\cb3               )\}\cb1 \
-\cb3             </div>\cb1 \
-\cb3           )\}\cb1 \
-\cb3         </main>\cb1 \
-\
-\cb3         <nav className=\cf6 \strokec6 "shrink-0 bg-[#FCF5EB] border-t border-[#E8BA21]/20 h-20 flex justify-around items-center z-30 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] px-2"\cf0 \strokec4 >\cb1 \
-\cb3           <\cf5 \strokec5 NavItem\cf0 \strokec4  icon=\{<\cf5 \strokec5 User\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \}/>\} label=\cf6 \strokec6 "My WISH"\cf0 \strokec4  isActive=\{activeTab === \cf6 \strokec6 'my-wish'\cf0 \strokec4 \} onClick=\{() => \{ setActiveTab(\cf6 \strokec6 'my-wish'\cf0 \strokec4 ); setSelectedWorkshopId(\cf2 \strokec2 null\cf0 \strokec4 ); \}\} />\cb1 \
-\cb3           <\cf5 \strokec5 NavItem\cf0 \strokec4  icon=\{<\cf5 \strokec5 CalendarDays\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \}/>\} label=\cf6 \strokec6 "Schedule"\cf0 \strokec4  isActive=\{activeTab === \cf6 \strokec6 'schedule'\cf0 \strokec4 \} onClick=\{() => \{ setActiveTab(\cf6 \strokec6 'schedule'\cf0 \strokec4 ); setSelectedWorkshopId(\cf2 \strokec2 null\cf0 \strokec4 ); \}\} />\cb1 \
-\cb3           <\cf5 \strokec5 NavItem\cf0 \strokec4  icon=\{<\cf5 \strokec5 BookOpen\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \}/>\} label=\cf6 \strokec6 "Workshops"\cf0 \strokec4  isActive=\{activeTab === \cf6 \strokec6 'workshops'\cf0 \strokec4 \} onClick=\{() => \{ setActiveTab(\cf6 \strokec6 'workshops'\cf0 \strokec4 ); setSelectedWorkshopId(\cf2 \strokec2 null\cf0 \strokec4 ); \}\} />\cb1 \
-\cb3           <\cf5 \strokec5 NavItem\cf0 \strokec4  icon=\{<\cf5 \strokec5 MapIcon\cf0 \strokec4  size=\{\cf8 \strokec8 20\cf0 \strokec4 \}/>\} label=\cf6 \strokec6 "Map"\cf0 \strokec4  isActive=\{activeTab === \cf6 \strokec6 'map'\cf0 \strokec4 \} onClick=\{() => \{ setActiveTab(\cf6 \strokec6 'map'\cf0 \strokec4 ); setSelectedWorkshopId(\cf2 \strokec2 null\cf0 \strokec4 ); \}\} />\cb1 \
-\cb3         </nav>\cb1 \
-\cb3       </div>\cb1 \
-\cb3     </div>\cb1 \
-\cb3   );\cb1 \
-\cb3 \}\cb1 \
+// --- CONFIGURATION ---
+const LINKS = {
+  // Itineraries pull live from Google Sheets
+  itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
+};
+
+const LOGO_URL = "https://lh3.googleusercontent.com/d/1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP";
+
+const CONFERENCE_INFO = {
+  dates: "Friday 17th — Sunday 19th April 2026",
+  tagline: "Join us for three days of connection and growth as we explore what it means to be a witness. Together, we will strengthen our bonds with each other and prepare to reach the world around us.",
+  address: "38 Lexton Road, Box Hill North, VIC 3129",
+  locationName: "FGAM",
+  googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129"
+};
+
+// --- DATA: VENUE MAP ---
+const VENUE_MAP = [
+  {
+    zone: "FGA Melbourne",
+    address: "38 Lexton Road, Box Hill North, VIC 3129",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129",
+    icon: <Home size={20} />,
+    description: "Main Building - Main Sessions, Meals, Kids Program",
+    rooms: [
+      { name: "Meeting Room", note: "Level 1" },
+      { name: "Lobby", note: "Level 2" },
+      { name: "Sanctuary", note: "Level 2" },
+      { name: "Classroom 1-5 (Kids Program)", note: "Level 2" },
+      { name: "Multipurpose Room (Kids Program)", note: "Level 2" },
+      { name: "Rooftop (Night Market)", note: "Rooftop" }
+    ]
+  },
+  {
+    zone: "4/41 Lexton Road",
+    address: "4/41 Lexton Road, Box Hill North, VIC 3129",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=4+41+Lexton+Road+Box+Hill+North+VIC+3129",
+    icon: <Building2 size={20} />,
+    description: "Satellite Workshop Space",
+    rooms: [
+      { name: "Main Space", note: "Upstairs" }
+    ]
+  },
+  {
+    zone: "7/41 Lexton Road",
+    address: "7/41 Lexton Road, Box Hill North, VIC 3129",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=7+41+Lexton+Road+Box+Hill+North+VIC+3129",
+    icon: <DoorOpen size={20} />,
+    description: "Satellite Workshop Space",
+    rooms: [
+      { name: "Dance Studio 1", note: "Ground Level" },
+      { name: "Dance Studio 2", note: "Upstairs" }
+    ]
+  },
+  {
+    zone: "61 Lexton Road",
+    address: "61 Lexton Road, Box Hill North, VIC 3129",
+    mapUrl: "https://www.google.com/maps/search/?api=1&query=61+Lexton+Road+Box+Hill+North+VIC+3129",
+    icon: <MapPinIcon size={20} />,
+    description: "Satellite Workshop Space",
+    rooms: [
+      { name: "Main Area", note: "Ground Level" },
+      { name: "Classroom", note: "Upstairs" }
+    ]
+  }
+];
+
+// --- DATA: WORKSHOPS ---
+const WORKSHOPS_DATA = [
+  { id: 'w1', title: 'Managing Screen Time', speaker: 'Kevin and Yen Siow', category: 'Parenting', biography: 'As parents of three boys, Kevin and Yen are still on the journey of learning how to navigate screens in a way that honours God, strengthens relationships and shapes character. They’ve learned that screens aren’t just about time limits, but about relationships, values and understanding the kind of people we are raising.', description: 'In this workshop, they will share a faith-centred, family values approach to digital habits, drawing on the work of Dr Justin Coulson (Happy Families) and their own lived experience. They will speak honestly about what has worked, what has not worked, and some of the mistakes they have made along the way, in the hope that other families can learn from them. Together, they will explore how calm conversations, shared expectations and simple structures can help families use screens for connection, communication and collaboration, while staying anchored in their values. Parents will leave with practical ideas they can try immediately, and encouragement that it’s possible to guide screen use in a way that strengthens family life.' },
+  { id: 'w2', title: 'Adulting 101', speaker: 'Mike and Maggie (underwriting)', category: 'Youth/ Young Adult', biography: 'Mike is a trained engineer and business owner who sees the world in systems. Maggie is a healthcare professional and homemaker who lives in the details. They married each other which, if you think about it, is either a masterclass in complementary strengths or a daily exercise in patience. Probably both. Between them, they bring a rare combination of big-picture thinking and ground-level practicality to the stuff that actually matters in everyday life.', description: "At some point, everyone looks around and realizes they have no idea what they're doing. And that's more normal than anyone admits. This session is an honest, practical conversation about the skills that actually matter in your 20s: finances, career, self care, life admin. Less overwhelm, more clarity.\n\nThis session is designed for young adults who are finding their feet. Rather than trying to cover everything, Mike and Maggie will hit the highlights and open the floor, because that's where the best stuff usually lives anyway." },
+  { id: 'w3', title: 'Entrepreneurship', speaker: 'Aaron Lau/Michael Ting', category: 'Career', biography: "Mike and Aaron have started half a dozen businesses between them some that worked, some that didn't, and all that taught them something. They've built ventures across automotive, healthcare, construction, and consulting, learning along the way that entrepreneurship is less about having all the answers and more about being willing to figure it out as you go.", description: "Entrepreneurship isn't just about starting a business. It's a posture, a way of seeing the world and responding to what doesn't exist yet. Whether you're building a company, launching a ministry, pioneering a community initiative, or creating something entirely new, the same apostolic DNA runs through it all.\n\nIn this conversational session, Aaron and Mike explore what it actually takes: the why behind the entrepreneurial call, the mindset that sustains you when there's no roadmap, and the skills you need to build something from nothing." },
+  { id: 'w4', title: 'Crossing borders, changing jobs', speaker: 'Alan Wong', category: 'Career', biography: 'Alan has worked across Asia-Pacific as an investment banker and fund manager including roles at Macquarie, Acorn Capital, and Sungrow. Having lived in Malaysia, Japan, Hong Kong, Singapore, and Australia, his journey includes career transitions, missed promotions, miscarriage, parenting challenges, and seasons of spiritual wrestling. Through it all, he has come to see the faithful sovereignty of God in life’s deserts and border crossings. He speaks from personal experience about faith formed through uncertainty.', description: 'From Malaysia to Australia, from career ambition to dealing with the painful realities of life and disappointment, I hope that my sharing will encourage you to see how God can use changes and crisis to shape us - in my case this was geographic moves, career setbacks, family trials, and desert seasons - testing times indeed!\n\nThrough Scripture and lived experience, I hope to show how we can trust God’s sovereignty — especially when the outcome is unclear — and to see uncertainty not as abandonment, but as key method of maturing.' },
+  { id: 'w5', title: 'Engaging AI', speaker: 'Alan Wong and Lawrence Chen', category: 'Tech', biography: 'Lawrence is a data analyst with a love for mathematics, music, and languages. He works in school funding reform while serving in 1830 ministry. He thinks deeply about how Christians can engage with AI faithfully and wisely. He uses AI in practical and human ways for home group, at work, for content creation, and as a son at home.\n\nAlan is a father, ex-entrepreneur, ex-fund manager and investment banker. He’s passionate about renewable energy and is currently on a study break. He is always interested learning new things and has a paid subscription to AI which he’s used for business, learning web design and content creation.', description: 'AI is rapidly reshaping how we access information, solve problems and create — accelerating many of the everyday tasks we already do. In this workshop, Lawrence and Alan will explore what AI is (and isn’t), and show how it can be used wisely and practically in daily life.\n\nWe’ll begin with simple, hands‑on examples that build AI literacy, reducing everyday friction. From there, we’ll consider the deeper questions — limitations, thinking habits, guardrails, and how Christians can engage this technological shift with wisdom and discernment.\n\nThis session offers a grounded, practical approach for engaging AI confidently and responsibly in a changing world.' },
+  { id: 'w6', title: 'Crowded House', speaker: 'Ash and Grace Chan', category: 'Family', biography: 'Hi, we’re Grace and Ash! We have been married for seven years and are the parents of Aria, our spirited three-year-old, and Madison, our joyful one-year-old. When Maddy arrived, we made the strategic decision to trade our autonomy for a "village," moving into Grace’s parents\' home. We bring a candid and transparent lens to the daily chaos of a five-adult household. We don’t claim to have "clocked" the art of multigenerational living; instead, we offer a raw, honest look at the logistical wins and emotional friction of sharing a life—and a kitchen—across three generations.', description: 'We often hear the proverb, but we rarely discuss the logistics of the "Village" when it’s all under one roof. Living with three generations offers incredible support, but it also brings a unique set of challenges—from conflicting routines to the "unspoken rules" of shared spaces. In this session, we’re opening up about our journey of living with parents and kids together.' },
+  { id: 'w7', title: 'Study Hacks', speaker: 'Ashley Ng', category: 'Youth', biography: 'Hi, I’m Ashley! I graduated from Balwyn High School in 2022, where I completed 8 VCE subjects over 3 years. Since then, I’ve also graduated with a Bachelor of Commerce degree at UniMelb (Actuarial Studies and Finance) and am currently pursuing a Diploma in Music - so I’ve ended up studying a pretty wide mix of subjects. I’ve also been tutoring high school students from year 7-12 for the past 5 years, and I’m really passionate about teaching and having a healthy balance between studies and everything else I’m involved in!', description: 'Do you feel like you study from hours on end but get nowhere? Or you’re struggling to balance school with everything else in life? In this workshop, I’ll be sharing the study strategies and practical tips that helped me during both VCE and university, and what I’ve learned from tutoring high school students. From remembering content more effectively and avoiding last-minute cramming to prepare more confidently for assessments or exams and managing your time well, the goal is to have a healthy balance between school and your priorities. You’ll gain practical ideas and strategies that you can start using immediately!' },
+  { id: 'w8', title: 'Women Dating', speaker: 'Belle Seow/Grace Leong?', category: 'Relationships', biography: "Belle is 30 years of age this year, has interest in fitness for injury prevention, baking for hunger prevention, and has been in a committed relationship with her husband Elijah for nearly 5 years including 2 years of marriage. Open communication, authenticity, and a robust understanding of one's self are things that Belle considers important for Godly relationships - and belle is keen to support young women in this endeavour.\n\nGrace is a 26 year old designer who loves sharing in her love of good food, talking about art and a good tv show. Now she gets to share all that with her partner and fiancé Dong (Daniel) as they work towards the next chapter of their relationship.", description: 'In today’s age, dating is more complicated than it ever has been. But have you ever thought to slow down and rediscover who you are in Christ before first navigating relationships?\n\nWhether you’re single, dating, or figuring things out, this workshop is about grounding yourself in God’s truth so you don’t lose yourself in the process.\n\nTogether with Belle and Grace we’ll talk honestly about relationships, boundaries, insecurities, and expectations, and what it means to prepare yourself in the waiting, so you can date from a place of peace, wholeness, and faith!' },
+  { id: 'w9', title: 'Demons in Christians?', speaker: 'Charles Ho', category: 'Theology', biography: 'We currently leading the Shalom Ministry, which is the Inner Healing and Deliverance (IHD) Ministry in FGAM. We have been involved in IHD in outside of FGAM for many years and have led mission trips focusing on IHD to Thailand and Laos. Our passion is to see Christians delivered and set free from demonic oppression and spiritual bondages.', description: 'Demons cannot have Christians but Christians can have demons! Demons are for real but we need to recognise them. This workshop will the topic cover how Christians may experience demonic oppression. We’ll look at the open doors that allow such oppression and the ways it can affect us mentally, physically, and spiritually. You will learn to identify the signs of demonic oppression and discover practical steps toward freedom.' },
+  { id: 'w10', title: 'Sex in the Suburbs', speaker: 'Daniel and Julie Wong', category: 'Marriage', biography: "Julie and Daniel Wong have been married for 37 years, with 4 adult children and 4 grandchildren. Daniel has his own AI business and Julie is a paediatric Occupational Therapist, with 34 years of counselling experience. Julie and Daniel have counselled many couples, in pre-marital counselling as well as married couples facing crises. They have a heart to see marriages flourish, and healed so that families can be healthy and strong in God's design. They have been a part of the FGA family for 11 years and serve in the prayer ministry as well as Christian Education and kitchen.", description: 'Sexual intimacy in marriage was designed by God to bring joy and fulfillment. In this workshop, we are going to talk about the joys of marital sex, as well as discussing some of the barriers that married couples face in intimacy and how to overcome them. Come prepared with questions and open hearts and minds to hear what the Holy Spirit is saying to you, so that you can start the journey toward a satisfying and fulfilling intimate marriage.' },
+  { id: 'w11', title: 'Running', speaker: 'David Gunn, Michelle Tsiros and Dennis Wong', category: 'Health', biography: 'David “Gunny” Gunn, Michelle Tsiros, and Dr Dennis Wong are all passionate about the benefits of running for physical, mental, and spiritual health.', description: 'What Are You Running Towards? Have you ever thought about getting into running, but found it a little daunting? It should be as simple as putting on a pair of runners and heading out the door — right? This workshop isn’t about becoming an elite athlete. It’s about discovering what many of us may have quietly missed by not running.' },
+  { id: 'w12', title: 'Gut & Brain', speaker: 'Dr. Dennis Wong', category: 'Health', biography: 'Dr Huang (Dennis) S. Wong, MBA FRACP BMBS, is a medical doctor and aged-care leader with a strong interest in brain health, dementia prevention, and the role of diet and daily lifestyle in protecting memory.', description: 'Our Gut–Brain Axis Workshop is a practical, science-grounded, and culturally sensitive exploration of how what we eat shapes how we think, feel, and age. This session unpacks the fascinating two-way communication between the gut and the brain—covering the microbiome, inflammation, metabolism, mood, and cognitive health—in an evidence-based yet easy-to-understand way.' },
+  { id: 'w13', title: 'Menopause Questions', speaker: 'Dr. Sze Wey Lee', category: 'Health', biography: 'I’m Sze Lee and I’m an obstetrician and gynaecologist based at Epworth Freemasons in East Melbourne. I have had the privilege of journeying with women through the many stages of their reproductive life for almost 20 years.', description: 'Menopause is often misunderstood and there are myths galore about what the symptoms of menopause are, what can be done about them and the pros and cons of managements.' },
+  { id: 'w14', title: 'Life Vision Board', speaker: 'Elaine Choi', category: 'Personal Growth', biography: 'Elaine Choi is a trainer and facilitator with a heart for guiding women through seasons of transition. As the founder of Eltitude Collective, she combines structured learning tools with prayerful reflection.', description: 'In this workshop, participants will explore what it means to align their lives with God’s purpose, rather than personal pressure or comparison.' },
+  { id: 'w15', title: 'Know Your WHY', speaker: 'Elijah Seow', category: 'Purpose', biography: 'Elijah is 29 years of age and has been following Christ for the past 12 years of his life with a heart for transparency and hard truths spoken in love.', description: 'Why do you do what you do? When misdirected - social commitments, work, family obligations, and even ministry can all lead to exhaustion, frustration, and even burnout.' },
+  { id: 'w16', title: 'Men Dating', speaker: 'Elijah Seow/Daniel Ong', category: 'Relationships', biography: 'Elijah (29) is newly married and Daniel Dong (30) is currently engaged. They bring insights from their own dating journeys.', description: 'A joint talk for young adult men with a focus on navigating ‘dating’ today, how to do it well by sharing perspectives, mistakes, and learnings.' },
+  { id: 'w17', title: 'Beyond Possible', speaker: 'Evelyn Seow', category: 'Theology', biography: 'With over four decades of ministry experience, Evelyn Seow is dedicated to empowering Christians to walk in the supernatural.', description: 'Jesus promised that "greater works shall we do," and this workshop will provide biblical steps to manifest the Kingdom and walk in the miraculous.' },
+  { id: 'w18', title: 'Homeschool Life', speaker: 'Ewnice Teh (and Tim)', category: 'Parenting', biography: 'Ewnice and Tim have been married for 15 years and are raising three children while managing their online businesses.', description: 'Ewnice shares her testimony of why they chose to homeschool and how it has allowed their family to reclaim time and focus on intentional presence.' },
+  { id: 'w19', title: 'Meet Meat', speaker: 'Jean-Paul Seow', category: 'Cooking', biography: 'TBC', description: 'If you love steak, this one’s for you! Learn about different cuts, seasoning tricks, and how to get restaurant-quality results at home.' },
+  { id: 'w20', title: 'Motorhome Life', speaker: 'Jit Lim', category: 'Lifestyle', biography: 'TBC', description: 'Jit shares memories and experiences from three winters on the road traveling around Australia.' },
+  { id: 'w21', title: 'Unexpected Life', speaker: 'Josh So and Mel Cheung', category: 'Testimony', biography: 'Josh and Mel have been together for 11 years and call FGAM home.', description: 'A vulnerable look at an 11-year journey, exploring how God works through seasons of waiting, suffering, and uncertainty.' },
+  { id: 'w22', title: 'Creative Dance', speaker: 'Kim Teh', category: 'Arts', biography: 'Kim is a passionate dance choreographer and teacher who loves facilitating individuals to discover their hidden dancer for God.', description: 'Discover a space where movement becomes prayer and creative expression unfolds to encounter God.' },
+  { id: 'w23', title: 'Teen Mental Health', speaker: 'Marie Yap (OAM)', category: 'Parenting', biography: 'Marie is a Professor of Psychology at Monash University specializing in adolescent mental health.', description: 'Learn practical and spiritual strategies to support the mental health and wellbeing of teenagers.' },
+  { id: 'w24', title: 'Parenting Expectations', speaker: 'May Yen Ong', category: 'Parenting', biography: 'May Yen Ong is deeply passionate about seeing families flourish and has served in ministry for over 20 years.', description: 'Navigate changing expectations as children grow into teens and young adults while maintaining strong relationships.' },
+  { id: 'w25', title: 'God’s Will', speaker: 'Michael Ting / Stephanie Lok', category: 'Youth', biography: 'Mike runs 1830 and Steph is a nurse; both are actively living the question of God\'s will in their lives.', description: '"What does God actually want for my life?" Explore this common question through lived experience and guideposts.' },
+  { id: 'w26', title: 'Simple Cooking', speaker: 'Min Leong Ong', category: 'Cooking', biography: 'TBC', description: 'A live food demonstration focused on effortless cooking, perfect for individuals or families.' },
+  { id: 'w27', title: 'Domestic Violence', speaker: 'Mona Julien', category: 'Care', biography: 'Mona has over two decades of experience working with families and people with disabilities.', description: 'A real, down‑to‑earth community talk about hidden domestic violence and what supportive responses look like.' },
+  { id: 'w28', title: 'Sanctification and Success', speaker: 'Nevile Waterman', category: 'Leadership', biography: 'Nev is a Christian husband, father, and business leader with many years of experience in church and corporate life.', description: 'Grow in faith, character, and confidence as you learn to follow Christ in a complex world.' },
+  { id: 'w29', title: 'Grief & Loss', speaker: 'Ps. Andrew Harper', category: 'Care', biography: 'Ps. Andrew served as a hospital chaplain for 11 years, caring for patients and families.', description: 'Discuss the journey of grief and how we may encounter God in the midst of often painful seasons.' },
+  { id: 'w30', title: 'Advanced Bible Study', speaker: 'Ps. Andrew Harper', category: 'Theology', biography: 'Ps. Andrew has served in pastoral and leadership roles since 1987.', description: 'Details coming soon.' },
+  { id: 'w31', title: "Following God's Calling", speaker: 'Ps. Roland Seow', category: 'Testimony', biography: 'Ps Roland is the Founding Pastor of FGA Melbourne with a passion for missions and families.', description: 'Chronicling FGAM\'s formation story to help participants discern God\'s voice amid life\'s uncertainties.' },
+  { id: 'w32', title: 'Healing Parental Hurt', speaker: 'Sarah Man and Lai Hing', category: 'Family', biography: 'Lai Hing is a social worker and Sarah is a counsellor. They serve at FGA and work in social inclusion.', description: 'A mother and daughter’s personal testimony on modeling Christlike humility to address and repair relational hurts.' },
+  { id: 'w33', title: 'Spirit-Led Parenting', speaker: 'Sonja Loke', category: 'Parenting', biography: 'Sonja is the Kids Pastor at FGA Kids and a mother of four.', description: 'Inviting the Holy Spirit into your parenting journey transform how you respond to your children.' },
+  { id: 'w34', title: 'Financial Freedom', speaker: 'Wally Chiang', category: 'Finance', biography: 'Wally retired at 41 after reaching financial independence and founded FAT FIRE Australia.', description: 'Unpack why so many feel trapped on a treadmill and learn a framework grounded in biblical principles.' },
+  { id: 'w35', title: 'Missions Topic', speaker: 'Chai Ng', category: 'Missions', biography: 'TBC', description: 'We are called to missions.' },
+  { id: 'w36', title: 'Family Activity', speaker: 'Harold Nguyen', category: 'Family', biography: 'TBC', description: 'A fun stage activity for all families.' },
+  { id: 'w37', title: 'Grow in Worship', speaker: 'Iain Low', category: 'Worship', biography: 'TBC', description: 'Learn how a life of worship contributes to spiritual growth.' },
+  { id: 'w38', title: 'Living with Disability', speaker: 'Ivan Low', category: 'Lifestyle', biography: 'TBC', description: 'A lived testimony about disability and how God walks with you.' },
+  { id: 'w39', title: 'Counselling Options', speaker: 'Matt Jones', category: 'Care', biography: 'Matt Jones is Head of Crossway LifeCare and an ordained Baptist minister.', description: 'When is it appropriate to refer to professional care? Explore these challenges to give you confidence to care.' },
+  { id: 'w40', title: 'Apologetics', speaker: 'Peggy Ong', category: 'Theology', biography: 'TBC', description: 'Learn how to defend your faith from Bible scholar and church elder Aunty Peggy.' },
+  { id: 'w41', title: 'Steps for Staying Faithful', speaker: 'Peggy Ong', category: 'Faith', biography: 'TBC', description: 'Practical steps for staying faithful as a Christian, suitable for all maturity stages.' },
+  { id: 'w42', title: 'No Burnouts', speaker: 'Albert Lee', category: 'Leadership', biography: 'Albert Lee is a seasoned commercial executive with over 30 years of multinationals experience.', description: 'Move beyond the cliché of "doing less" to the art of leading better without consuming yourself.' },
+  { id: 'w43', title: 'Decision Fatigue', speaker: 'Ps. Chris Ong', category: 'Leadership', biography: 'TBC', description: 'Unpack why decision fatigue is common and how to approach making choices more wisely.' },
+  { id: 'w44', title: "Things We Don't Talk About in the Journey", speaker: 'Ps. Chris Ong', category: 'Testimony', biography: 'TBC', description: 'Ps. Chris Ong reflects honestly on the hidden costs and trials that shape a 30-year journey.' },
+  { id: 'w45', title: 'Honesty', speaker: 'Ps. Isaac Ling', category: 'Faith', biography: 'TBC', description: 'How to live an honest, transparent God-honoring life and the repercussions of not doing so.' },
+  { id: 'w46', title: 'Spiritual Ministry', speaker: 'Ps. Isaac Ling', category: 'Ministry', biography: 'TBC', description: 'Come for a time of spiritual ministry with Ps. Isaac Ling.' },
+  { id: 'w47', title: 'Older Fitness', speaker: 'Tim Tan', category: 'Health', biography: 'Timothy is a chiropractor passionate about empowering older generations to feel strong.', description: 'Honour God with your body as a temple. Beginner-friendly exercises and stretches.' },
+  { id: 'w48', title: 'Youth are Leaders Today', speaker: 'JP/Jordan', category: 'Youth', biography: 'TBC', description: 'A youth-led session sharing how young people are learning to live out their faith now.' },
+  { id: 'w49', title: 'My Faith, My Journey (Youth)', speaker: 'TBC', category: 'Youth', biography: 'TBC', description: 'Introduces youth to biblical testimony and everyday faithfulness.' },
+  { id: 'w50', title: 'Live It Out! (Youth)', speaker: 'TBC', category: 'Youth', biography: 'TBC', description: 'A panel discussion equiping youth to see how everyday actions reflect Christ.' },
+  { id: 'w51', title: 'Family Stage Activity', speaker: 'TBC', category: 'Family', biography: 'TBC', description: 'TBC' },
+  { id: 'w52', title: 'Youth Presentation Activity', speaker: 'TBC', category: 'Youth', biography: 'TBC', description: 'TBC' },
+  { id: 'w53', title: 'Designing A Youth Service (Youth)', speaker: 'TBC', category: 'Youth', biography: 'TBC', description: 'Showcase the testimonies of young people and vibrancy of next-gen faith.' },
+];
+
+const MASTER_SCHEDULE = [
+  { 
+    date: 'Friday', 
+    events: [ 
+      { id: 'f1', time: '5:30 PM', title: 'Doors Open & Dinner', location: 'Lobby', type: 'main' }, 
+      { id: 'f2', time: '7:00 PM', title: 'Doors Open & Keynote Session', location: 'Sanctuary', type: 'main' } 
+    ] 
+  },
+  { 
+    date: 'Saturday', 
+    events: [ 
+      { id: 's1', time: '9:00 AM', title: 'All In Session', location: 'Sanctuary', type: 'main' }, 
+      { id: 's2', time: '9:30 AM', title: 'Workshop Session 1', type: 'workshop_slot' }, 
+      { id: 's3', time: '10:30 AM', title: 'Workshop Session 2', type: 'workshop_slot' }, 
+      { id: 's4', time: '12:00 PM', title: 'Workshop Session 3/Lunch', type: 'workshop_slot' }, 
+      { id: 's5', time: '1:00 PM', title: 'Workshop Session 4/Lunch', type: 'workshop_slot' }, 
+      { id: 's6', time: '2:00 PM', title: 'Workshop Session 5', type: 'workshop_slot' }, 
+      { id: 's7', time: '3:00 PM', title: 'Workshop Session 6', type: 'workshop_slot' }, 
+      { id: 's8', time: '4:00 PM', title: 'Keynote Session', location: 'Sanctuary', type: 'main' },
+      { id: 's9', time: '6:00 PM', title: 'Night Market', location: 'FGAM Rooftop', type: 'main' }
+    ] 
+  },
+  { 
+    date: 'Sunday', 
+    events: [ 
+      { id: 'su1', time: '9:00 AM', title: 'All In Session', location: 'Sanctuary', type: 'main' }, 
+      { id: 'su2', time: '9:30 AM', title: 'Workshop Session 7', type: 'workshop_slot' }, 
+      { id: 'su3', time: '10:30 AM', title: 'Workshop Session 8', type: 'workshop_slot' }, 
+      { id: 'su4', time: '12:00 PM', title: 'Workshop Session 9/Lunch', type: 'workshop_slot' }, 
+      { id: 'su5', time: '1:00 PM', title: 'Workshop Session 10/Lunch', type: 'workshop_slot' }, 
+      { id: 'su6', time: '2:00 PM', title: 'Workshop Session 11', type: 'workshop_slot' }, 
+      { id: 'su7', time: '3:00 PM', title: 'CONFERENCE CLOSE KEYNOTE', location: 'Sanctuary', type: 'main' } 
+    ] 
+  }
+];
+
+// --- HELPERS ---
+
+function getSafeField(row, fieldName) {
+  if (!row) return '';
+  const cleanTarget = fieldName.trim().toLowerCase();
+  const actualKey = Object.keys(row).find(k => k.trim().toLowerCase() === cleanTarget);
+  const value = actualKey ? row[actualKey] : '';
+  return (value || '').toString().trim();
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/);
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+  return lines.slice(1)
+    .filter(l => l.trim().length > 0)
+    .map((line) => {
+      const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      headers.forEach((h, i) => { if (h) row[h] = values[i] || ''; });
+      return row;
+    })
+    .filter(row => Object.values(row).some(v => v.trim() !== '')); 
+}
+
+// --- COMPONENTS ---
+
+function NavItem({ icon, label, isActive, onClick }) {
+  return (
+    <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${isActive ? 'text-[#4563AD]' : 'text-gray-400'}`}>
+      <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-[#4563AD]/10' : ''}`}>{icon}</div>
+      <span className="text-[9px] font-extrabold uppercase tracking-tighter text-center leading-tight">{label}</span>
+    </button>
+  );
+}
+
+function ExpandableText({ text, maxLength = 120, className = "text-gray-600 text-sm leading-relaxed font-medium" }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  if (!text || text.length === 0) return null;
+  if (text.length <= maxLength) return <p className={`${className} whitespace-pre-wrap`}>{text}</p>;
+  return (
+    <div className={className}>
+      <span className="whitespace-pre-wrap">{isExpanded ? text : `${text.substring(0, maxLength).trim()}...`}</span>
+      <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className="ml-2 text-[#ED4E23] font-bold hover:underline inline-flex items-center">
+        {isExpanded ? 'See less' : 'See more'}
+      </button>
+    </div>
+  );
+}
+
+function DaySelector({ selectedDay, onDayChange }) {
+  const days = ['Friday', 'Saturday', 'Sunday'];
+  return (
+    <div className="sticky top-0 bg-[#FCF5EB]/95 backdrop-blur-sm z-10 py-4 border-b border-[#E8BA21]/20 -mx-6 px-6 mb-6">
+      <div className="flex bg-white/50 p-1 rounded-2xl border border-gray-100 shadow-sm">
+        {days.map(day => (
+          <button
+            key={day}
+            onClick={() => onDayChange(day)}
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-widest ${selectedDay === day ? 'bg-[#4563AD] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            {day}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function WorkshopDetailView({ workshop, onBack }) {
+  if (!workshop) return null;
+
+  return (
+    <div className="flex flex-col min-h-full bg-[#FCF5EB] animate-in slide-in-from-right-8 duration-300 pb-8 text-left text-balance">
+      <div className="p-4 border-b border-[#E8BA21]/20 flex items-center gap-2 sticky top-0 bg-[#FCF5EB]/90 backdrop-blur-sm z-10">
+        <button onClick={onBack} className="p-2 -ml-2 text-[#4563AD] hover:bg-[#4563AD]/10 rounded-full transition-colors"><ChevronLeft size={24} /></button>
+        <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-wider">Session Details</span>
+      </div>
+      <div className="p-6">
+        <h1 className="text-3xl font-extrabold text-gray-900 leading-tight mb-2 font-serif">{workshop.title || 'Untitled Session'}</h1>
+        <p className="text-lg font-bold text-[#ED4E23]">by {workshop.speaker || 'TBA'}</p>
+        
+        <div className="prose prose-sm text-gray-600 font-medium leading-relaxed bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm my-8">
+          <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">About this session</h3>
+          {workshop.description ? (
+            <ExpandableText text={workshop.description} maxLength={3000} />
+          ) : (
+            <p className="italic text-gray-400">Description coming soon...</p>
+          )}
+        </div>
+
+        <div className="bg-white p-6 rounded-[2rem] border border-[#4563AD]/10 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[#E8BA21]/10 rounded-bl-full -z-0"></div>
+          <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10">About the Speaker</h3>
+          <div className="flex items-start gap-4 relative z-10">
+            <div className="w-16 h-16 rounded-full bg-[#FCF5EB] border-2 border-[#ED4E23] overflow-hidden shrink-0 flex items-center justify-center font-bold text-[#ED4E23] text-2xl shadow-sm">
+              {(workshop.speaker || 'T').charAt(0)}
+            </div>
+            <div className="flex-1">
+              <h4 className="font-extrabold text-gray-900 text-base leading-tight">{workshop.speaker || 'To be announced'}</h4>
+              {workshop.biography ? (
+                <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed font-medium" />
+              ) : (
+                <p className="text-sm text-gray-400 mt-1.5 italic">Biography coming soon...</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- MAIN APP ---
+
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
+  const [activeTab, setActiveTab] = useState('my-wish');
+  const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [matchingUsers, setMatchingUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [selectedDay, setSelectedDay] = useState('Friday');
+
+  const categories = ['All', ...new Set(WORKSHOPS_DATA.map(w => w.category).filter(Boolean))];
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setIsLoading(true);
+    setError('');
+    const emailStr = email.trim().toLowerCase();
+    
+    try {
+      const response = await fetch(LINKS.itineraries);
+      const csvText = await response.text();
+      const data = parseCSV(csvText);
+      
+      const users = data.filter(row => {
+        const rowEmail = getSafeField(row, 'Email').toLowerCase();
+        return rowEmail === emailStr;
+      });
+
+      if (users.length === 1) {
+        processUser(users[0]);
+      } else if (users.length > 1) {
+        setMatchingUsers(users);
+      } else {
+        setError("Registration not found. Please check your spelling.");
+      }
+    } catch (err) {
+      setError("Unable to sync. Please check your internet connection.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const processUser = (row) => {
+    const fName = getSafeField(row, 'Name (First)');
+    const lName = getSafeField(row, 'Name (Last)');
+    const emailAddr = getSafeField(row, 'Email');
+    const fullName = `${fName} ${lName}`.trim() || emailAddr.split('@')[0];
+    
+    const userWorkshops = {};
+    const identityKeys = ['email', 'name(first)', 'name(last)', 'name'];
+    Object.keys(row).forEach(key => {
+      const val = (row[key] || '').toString().trim().toLowerCase();
+      if (!identityKeys.includes(key.trim().toLowerCase()) && val) {
+        userWorkshops[key.trim().toLowerCase()] = val;
+      }
+    });
+
+    setCurrentUser({ name: fullName, workshops: userWorkshops });
+    setMatchingUsers([]);
+    setSelectedDay('Saturday');
+  };
+
+  const filteredWorkshops = WORKSHOPS_DATA.filter(w => {
+    const title = w.title.toLowerCase();
+    const speaker = w.speaker.toLowerCase();
+    const search = searchTerm.toLowerCase();
+    return title.includes(search) || speaker.includes(search);
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-100 flex justify-center items-center font-sans text-gray-900 selection:bg-[#E8BA21]/30 p-0 sm:p-4 text-left">
+      <div className="w-full h-screen sm:max-h-[850px] sm:max-w-[440px] bg-[#FCF5EB] sm:rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col sm:border-[8px] sm:border-gray-900 animate-in fade-in duration-500">
+        
+        <header className="bg-[#FCF5EB] border-b border-[#E8BA21]/20 p-5 flex justify-between items-center z-20 shadow-sm shrink-0">
+          <img src={LOGO_URL} className="h-9 object-contain" alt="Logo" />
+          {currentUser && (
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-200 font-bold text-sm text-[#4563AD] uppercase shadow-sm">
+              {currentUser.name.charAt(0)}
+            </div>
+          )}
+        </header>
+
+        <main className="flex-1 overflow-y-auto bg-[#FCF5EB] relative scroll-smooth text-balance">
+          {selectedWorkshopId ? (
+            <WorkshopDetailView 
+              workshop={WORKSHOPS_DATA.find(w => w.id.toLowerCase() === selectedWorkshopId.toLowerCase())} 
+              onBack={() => setSelectedWorkshopId(null)} 
+            />
+          ) : (
+            <div className="p-6 pb-24">
+              {/* TAB: MY WISH */}
+              {activeTab === 'my-wish' && (
+                currentUser ? (
+                  <div className="space-y-10 animate-in slide-in-from-bottom-4">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <h2 className="text-3xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2>
+                        <p className="text-xs text-gray-500 font-bold uppercase mt-1">Hello, {currentUser.name}</p>
+                      </div>
+                      <button onClick={() => setCurrentUser(null)} className="text-[10px] font-bold text-gray-400 bg-white px-2 py-1 rounded-md border border-gray-200 uppercase tracking-widest">Logout</button>
+                    </div>
+
+                    <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
+
+                    {MASTER_SCHEDULE.filter(day => day.date === selectedDay).map((day) => (
+                      <div key={`personal-day-${day.date}`} className="animate-in fade-in duration-300">
+                        <div className="space-y-4">
+                          {day.events.map((event) => {
+                            const userWorkshopCode = currentUser.workshops[event.id.toLowerCase()] || '';
+                            const workshop = WORKSHOPS_DATA.find(w => w.id.toLowerCase() === userWorkshopCode.toLowerCase());
+                            const isSlot = event.type === 'workshop_slot';
+                            const isH = isSlot && workshop;
+                            const isEmptySlot = isSlot && !workshop;
+                            
+                            return (
+                              <div key={`personal-ev-${event.id}`} className="flex gap-4 text-left">
+                                <div className="w-16 shrink-0 pt-1.5 text-right font-bold text-gray-900 text-sm">{event.time}</div>
+                                <div 
+                                  className={`flex-1 p-4 rounded-2xl border transition-all ${isH ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white border-gray-100 shadow-sm'} relative overflow-hidden`}
+                                  onClick={() => isH ? setSelectedWorkshopId(workshop.id) : null}
+                                >
+                                  {(isH || event.type === 'main' || event.title === 'Night Market') && <div className={`absolute top-0 left-0 w-1.5 h-full ${(event.type === 'main' || event.title === 'Night Market') ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}
+                                  <h4 className={`font-bold text-gray-900 leading-snug ${isEmptySlot ? 'italic text-gray-400' : ''}`}>
+                                    {workshop ? workshop.title : (isEmptySlot ? 'Choice Pending' : event.title)}
+                                  </h4>
+                                  {workshop && <p className="text-xs text-[#ED4E23] mt-1 font-bold">with {workshop.speaker}</p>}
+                                  <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500 font-semibold uppercase tracking-wider"><MapPin size={13} /> {event.location || 'TBA'}</div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="animate-in fade-in duration-500">
+                    {matchingUsers.length > 0 ? (
+                      <div className="pt-10">
+                        <button onClick={() => setMatchingUsers([])} className="mb-4 text-xs font-bold text-[#4563AD] flex items-center gap-1"><ChevronLeft size={14}/> Back</button>
+                        <h2 className="text-2xl font-extrabold text-[#4563AD] mb-2 font-serif">Select Person</h2>
+                        <div className="space-y-3 mt-4">
+                          {matchingUsers.map((u, i) => (
+                            <button key={`user-choice-${i}`} onClick={() => processUser(u)} className="w-full p-4 bg-white border border-[#E8BA21]/30 rounded-2xl flex items-center justify-between group active:scale-95 transition-transform shadow-sm">
+                              <span className="font-bold text-gray-800">{(getSafeField(u, 'Name (First)') + ' ' + getSafeField(u, 'Name (Last)')).trim() || getSafeField(u, 'Email')}</span>
+                              <ChevronRight size={18} className="text-[#E8BA21]" />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col text-left">
+                        {/* Welcome Hero Section */}
+                        <div className="pt-8 pb-10 border-b border-gray-100 mb-8">
+                          <div className="inline-flex items-center gap-2 bg-[#4563AD]/10 text-[#4563AD] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4">
+                            <Sparkles size={12} /> WISH CONFERENCE '26
+                          </div>
+                          <h1 className="text-4xl font-extrabold text-gray-900 leading-tight font-serif mb-4">
+                            Welcome to <span className="text-[#ED4E23]">WISH</span>
+                          </h1>
+                          <p className="text-sm text-[#4563AD] font-bold leading-relaxed mb-6">
+                            {CONFERENCE_INFO.tagline}
+                          </p>
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center gap-3 text-gray-500">
+                              <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm text-[#E8BA21]">
+                                <Calendar size={16} />
+                              </div>
+                              <span className="text-sm font-semibold">{CONFERENCE_INFO.dates}</span>
+                            </div>
+                            
+                            {/* Clickable Address Button */}
+                            <a 
+                              href={CONFERENCE_INFO.googleMapsUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 text-gray-500 hover:text-[#4563AD] transition-all group"
+                            >
+                              <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center shrink-0 shadow-sm text-[#E8BA21] group-hover:text-[#4563AD] group-hover:border-[#4563AD]/20 transition-colors">
+                                <MapPin size={16} />
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-sm font-semibold group-hover:underline">{CONFERENCE_INFO.locationName}</span>
+                                <span className="text-[10px] text-gray-400 font-medium group-hover:text-[#4563AD]/70">{CONFERENCE_INFO.address}</span>
+                              </div>
+                              <ChevronRight size={14} className="ml-auto text-gray-300 group-hover:text-[#4563AD]" />
+                            </a>
+                          </div>
+                        </div>
+
+                        {/* Sign In Section */}
+                        <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                          <h2 className="text-xl font-extrabold text-gray-900 mb-2">Access Your Itinerary</h2>
+                          <p className="text-xs text-gray-400 font-medium mb-6">Enter your registered email to load your personalized workshop schedule and room assignments.</p>
+                          <form onSubmit={handleLogin} className="space-y-4">
+                            <input 
+                              type="email" 
+                              value={email} 
+                              onChange={e => setEmail(e.target.value)} 
+                              placeholder="Email address" 
+                              className="w-full p-4 rounded-2xl border border-gray-100 focus:ring-2 focus:ring-[#E8BA21] outline-none text-gray-900 font-medium text-sm transition-all" 
+                              required 
+                            />
+                            {error && <div className="text-red-500 text-[10px] font-bold bg-red-50 p-3 rounded-xl flex items-center gap-2 animate-in slide-in-from-top-1"><AlertCircle size={14}/> {error}</div>}
+                            <button type="submit" disabled={isLoading} className="w-full bg-[#ED4E23] text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-[#ED4E23]/20 hover:bg-[#ED4E23]/90 active:scale-95 transition-all flex items-center justify-center gap-2">
+                              {isLoading ? "Syncing..." : <>Get My Schedule <ChevronRight size={18}/></>}
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+
+              {/* TAB: SCHEDULE */}
+              {activeTab === 'schedule' && (
+                <div className="animate-in slide-in-from-bottom-4 text-left">
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-extrabold text-[#ED4E23] font-serif">Conference</h2>
+                    <p className="text-xs text-gray-500 font-bold uppercase mt-1">Master Schedule</p>
+                  </div>
+                  
+                  <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
+
+                  {MASTER_SCHEDULE.filter(day => day.date === selectedDay).map((day) => (
+                    <div key={`master-day-${day.date}`} className="animate-in fade-in duration-300">
+                      <div className="space-y-4">
+                        {day.events.map((event) => (
+                          <div key={`master-ev-${event.id}`} className="flex gap-4 text-left">
+                            <div className="w-16 shrink-0 pt-1.5 text-right font-bold text-gray-900 text-sm">{event.time}</div>
+                            <div className="flex-1 p-4 rounded-2xl border bg-white border-gray-100 shadow-sm relative overflow-hidden">
+                              {(event.type === 'main' || event.title === 'Night Market') && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4563AD]" />}
+                              {event.type === 'workshop_slot' && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E8BA21]" />}
+                              <h4 className="font-bold text-gray-900 leading-tight">{event.title}</h4>
+                              <div className="flex items-center gap-1.5 mt-2 text-xs text-gray-500 font-semibold uppercase tracking-wider"><MapPin size={13} /> {event.location || 'Multiple Rooms'}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* TAB: WORKSHOPS */}
+              {activeTab === 'workshops' && (
+                <div className="animate-in slide-in-from-bottom-4 text-left">
+                  <div className="mb-6">
+                    <h2 className="text-3xl font-extrabold text-[#ED4E23] font-serif mb-2">Workshops</h2>
+                    <p className="text-sm text-gray-500 font-medium">Browse available sessions.</p>
+                  </div>
+                  
+                  <div className="relative mb-6">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input type="text" placeholder="Search topics or speakers..." className="w-full pl-11 p-4 rounded-2xl border border-[#E8BA21]/30 bg-white outline-none focus:ring-2 focus:ring-[#E8BA21] font-medium text-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-3 mt-2">
+                    {filteredWorkshops.map((w) => (
+                      <div key={`w-list-${w.id}`} onClick={() => setSelectedWorkshopId(w.id)} className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-100 hover:border-[#E8BA21]/50 cursor-pointer active:scale-[0.98] transition-all group flex flex-col gap-1 text-left">
+                        <h3 className="font-extrabold text-xl text-gray-900 leading-tight">{w.title}</h3>
+                        <p className="text-[#ED4E23] text-sm font-bold uppercase tracking-wider">{w.speaker}</p>
+                        {w.category && (
+                          <p className="text-[#4563AD] text-[10px] font-extrabold uppercase tracking-widest bg-[#4563AD]/5 inline-block px-2 py-0.5 rounded self-start mt-1 border border-[#4563AD]/10">{w.category}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB: MAP */}
+              {activeTab === 'map' && (
+                <div className="animate-in slide-in-from-bottom-4 text-left">
+                  <h2 className="text-3xl font-extrabold text-[#ED4E23] font-serif mb-2 text-left">Conference Locations</h2>
+                  <p className="text-sm text-gray-500 font-medium mb-8 text-left">Locate your workshop rooms and facilities across our Lexton Road locations.</p>
+                  
+                  <div className="space-y-6">
+                    {VENUE_MAP.map((location, idx) => (
+                      <div key={`loc-${idx}`} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden text-left">
+                        <div className="p-5 flex items-start gap-4 border-b border-gray-50 bg-gray-50/30">
+                          <div className="w-10 h-10 rounded-xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0">
+                            {location.icon}
+                          </div>
+                          <div>
+                            <h3 className="text-lg font-extrabold text-gray-900">{location.zone}</h3>
+                            <a 
+                              href={location.mapUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="inline-flex items-center gap-1 text-xs text-[#E8BA21] font-bold mt-0.5 hover:underline group/addr"
+                            >
+                              {location.address}
+                              <ExternalLink size={10} className="text-gray-300 group-hover/addr:text-[#E8BA21]" />
+                            </a>
+                            <p className="text-[10px] text-gray-400 font-medium mt-1">{location.description}</p>
+                          </div>
+                        </div>
+                        <div className="p-4 grid grid-cols-1 gap-2">
+                          {location.rooms.map((room, rIdx) => (
+                            <div key={`room-${rIdx}`} className="flex items-center justify-between p-3 bg-white rounded-xl border border-gray-100">
+                              <span className="text-sm font-bold text-gray-700">{room.name}</span>
+                              <span className="text-[9px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded tracking-wider border border-gray-100">{room.note}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+
+        <nav className="shrink-0 bg-[#FCF5EB] border-t border-[#E8BA21]/20 h-20 flex justify-around items-center z-30 shadow-[0_-4px_15px_rgba(0,0,0,0.05)] px-2">
+          <NavItem icon={<User size={20}/>} label="My WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={<CalendarDays size={20}/>} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={<BookOpen size={20}/>} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={<MapIcon size={20}/>} label="Map" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); }} />
+        </nav>
+      </div>
+    </div>
+  );
 }
