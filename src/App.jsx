@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, Search, User, LogOut, ChevronLeft, AlertCircle, ChevronRight, ListChecks, Filter, Sparkles, Calendar, Home, DoorOpen, Coffee, Sun, Building2, Map as MapPinIcon, ExternalLink } from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, Search, User, ChevronLeft, AlertCircle, ChevronRight, Sparkles, Calendar, Home, Building2, DoorOpen, Map as MapPinIcon, ExternalLink } from 'lucide-react';
 
 // --- CONFIGURATION ---
 const LINKS = {
+  // Pulls live from Google Sheets
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
 };
 
-const LOGO_URL = "https://lh3.googleusercontent.com/d/1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP";
+// Path for your locally hosted logo in the /public folder
+const LOGO_URL = "/logo.png";
 
 const CONFERENCE_INFO = {
   dates: "Friday 17th — Sunday 19th April 2026",
@@ -80,620 +82,455 @@ const VENUE_MAP = [
 
 const WORKSHOPS_DATA = [
   { 
-    id: 'w1', 
-    title: 'Managing Screen Time', 
-    speaker: 'Kevin and Yen Siow', 
-    category: 'Parenting', 
-    biography: 'As parents of three boys, Kevin and Yen are still on the journey of learning how to navigate screens in a way that honours God, strengthens relationships and shapes character. They’ve learned that screens aren’t just about time limits, but about relationships, values and understanding the kind of people we are raising.', 
-    description: 'In this workshop, they will share a faith-centred, family values approach to digital habits, drawing on the work of Dr Justin Coulson (Happy Families) and their own lived experience. They will speak honestly about what has worked, what has not worked, and some of the mistakes they have made along the way, in the hope that other families can learn from them. Together, they will explore how calm conversations, shared expectations and simple structures can help families use screens for connection, communication and collaboration, while staying anchored in their values. Parents will leave with practical ideas they can try immediately, and encouragement that it’s possible to guide screen use in a way that strengthens family life.',
+    id: 'w1', title: 'Managing Screen Time', speaker: 'Kevin and Yen Siow', category: 'Parenting',
+    biography: 'As parents of three boys, Kevin and Yen are still on the journey of learning how to navigate screens in a way that honours God, strengthens relationships and shapes character.', 
+    description: 'In this workshop, they will share a faith-centred, family values approach to digital habits, drawing on the work of Dr Justin Coulson (Happy Families) and their own lived experience.',
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' },
       { day: 'Sun', time: '2:00 PM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w2', 
-    title: 'Adulting 101', 
-    speaker: 'Mike and Maggie (underwriting)', 
-    category: 'Youth/ Young Adult', 
-    biography: 'Mike is a trained engineer and business owner who sees the world in systems. Maggie is a healthcare professional and homemaker who lives in the details. They married each other which, if you think about it, is either a masterclass in complementary strengths or a daily exercise in patience. Probably both. Between them, they bring a rare combination of big-picture thinking and ground-level practicality to the stuff that actually matters in everyday life.', 
-    description: "At some point, everyone looks around and realizes they have no idea what they're doing. And that's more normal than anyone admits. This session is an honest, practical conversation about the skills that actually matter in your 20s: finances, career, self care, life admin. Less overwhelm, more clarity.",
+    id: 'w2', title: 'Adulting 101', speaker: 'Mike and Maggie (underwriting)', category: 'Youth/ Young Adult',
+    biography: 'Mike is a trained engineer and business owner who sees the world in systems. Maggie is a healthcare professional and homemaker who lives in the details.', 
+    description: "Honest conversation about the skills that actually matter in your 20s: finances, career, self care, life admin.",
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Meeting Room (FGA Melbourne)' },
       { day: 'Sat', time: '2:00 PM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w3', 
-    title: 'Entrepreneurship', 
-    speaker: 'Aaron Lau/Michael Ting', 
-    category: 'Career',
-    biography: "Mike and Aaron have started half a dozen businesses between them some that worked, some that didn't, and all that taught them something. They've built ventures across automotive, healthcare, construction, and consulting, learning along the way that entrepreneurship is less about having all the answers and more about being willing to figure it out as you go.", 
-    description: "Entrepreneurship isn't just about starting a business. It's a posture, a way of seeing the world and responding to what doesn't exist yet. Whether you're building a company, launching a ministry, pioneering a community initiative, or creating something entirely new, the same apostolic DNA runs through it all.",
+    id: 'w3', title: 'Entrepreneurship', speaker: 'Aaron Lau/Michael Ting', category: 'Career',
+    biography: "Mike and Aaron have started half a dozen businesses between them.", 
+    description: "Entrepreneurship isn't just about starting a business. It's a posture, a way of seeing the world and responding to what doesn't exist yet.",
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w4', 
-    title: 'Crossing borders, changing jobs', 
-    speaker: 'Alan Wong', 
-    category: 'Career',
-    biography: 'Alan has worked across Asia-Pacific as an investment banker and fund manager including roles at Macquarie, Acorn Capital, and Sungrow. Having lived in Malaysia, Japan, Hong Kong, Singapore, and Australia, his journey includes career transitions, missed promotions, miscarriage, parenting challenges, and seasons of spiritual wrestling. Through it all, he has come to see the faithful sovereignty of God in life’s deserts and border crossings. He speaks from personal experience about faith formed through uncertainty.', 
-    description: 'From Malaysia to Australia, from career ambition to dealing with the painful realities of life and disappointment, I hope that my sharing will encourage you to see how God can use changes and crisis to shape us - in my case this was geographic moves, career setbacks, family trials, and desert seasons - testing times indeed!\n\nThrough Scripture and lived experience, I hope to show how we can trust God’s sovereignty — especially when the outcome is unclear — and to see uncertainty not as abandonment, but as key method of maturing.',
+    id: 'w4', title: 'Crossing borders, changing jobs', speaker: 'Alan Wong', category: 'Career',
+    biography: 'Alan has worked across Asia-Pacific as an investment banker and fund manager.', 
+    description: 'From career ambition to dealing with the painful realities of life and disappointment, Alan shares how God can use changes and crisis to shape us.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w5', 
-    title: 'Engaging AI', 
-    speaker: 'Alan Wong and Lawrence Chen', 
-    category: 'Tech',
-    biography: 'Lawrence is a data analyst with a love for mathematics, music, and languages. He works in school funding reform while serving in 1830 ministry. He thinks deeply about how Christians can engage with AI faithfully and wisely. He uses AI in practical and human ways for home group, at work, for content creation, and as a son at home.\n\nAlan is a father, ex-entrepreneur, ex-fund manager and investment banker. He’s passionate about renewable energy and is currently on a study break.', 
-    description: 'AI is rapidly reshaping how we access information, solve problems and create — accelerating many of the everyday tasks we already do. In this workshop, Lawrence and Alan will explore what AI is (and isn’t), and show how it can be used wisely and practically in daily life.',
+    id: 'w5', title: 'Engaging AI', speaker: 'Alan Wong and Lawrence Chen', category: 'Tech',
+    biography: 'Lawrence is a data analyst. Alan is a father and ex-entrepreneur with a passion for new tech.', 
+    description: 'AI is rapidly reshaping how we access information, solve problems and create.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Classroom (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w6', 
-    title: 'Crowded House', 
-    speaker: 'Ash and Grace Chan', 
-    category: 'Family',
-    biography: 'Hi, we’re Grace and Ash! We have been married for seven years and are the parents of Aria, our spirited three-year-old, and Madison, our joyful one-year-old. When Maddy arrived, we made the strategic decision to trade our autonomy for a "village," moving into Grace’s parents\' home. We bring a candid and transparent lens to the daily chaos of a five-adult household.', 
-    description: 'We often hear the proverb, but we rarely discuss the logistics of the "Village" when it’s all under one roof. Living with three generations offers incredible support, but it also brings a unique set of challenges—from conflicting routines to the "unspoken rules" of shared spaces. In this session, we’re opening up about our journey of living with parents and kids together.',
+    id: 'w6', title: 'Crowded House', speaker: 'Ash and Grace Chan', category: 'Family',
+    biography: 'Grace and Ash have been married for seven years and are the parents of Aria and Madison.', 
+    description: 'Living with three generations offers incredible support, but it also brings a unique set of challenges.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w7', 
-    title: 'Study Hacks', 
-    speaker: 'Ashley Ng', 
-    category: 'Youth',
-    biography: 'Hi, I’m Ashley! I graduated from Balwyn High School in 2022, where I completed 8 VCE subjects over 3 years. Since then, I’ve also graduated with a Bachelor of Commerce degree at UniMelb (Actuarial Studies and Finance) and am currently pursuing a Diploma in Music. I’ve also been tutoring high school students from year 7-12 for the past 5 years.', 
-    description: 'Do you feel like you study for hours on end but get nowhere? Or you’re struggling to balance school with everything else in life? In this workshop, I’ll be sharing the study strategies and practical tips that helped me during both VCE and university, and what I’ve learned from tutoring high school students.',
+    id: 'w7', title: 'Study Hacks', speaker: 'Ashley Ng', category: 'Youth',
+    biography: 'Ashley completed 8 VCE subjects and a Bachelor of Commerce. She has tutored for 5 years.', 
+    description: 'Strategies for effective studying and time management.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w8', 
-    title: 'Women Dating', 
-    speaker: 'Belle Seow / Grace Leong?', 
-    category: 'Relationships',
-    biography: "Belle is 30 years of age this year, has interest in fitness for injury prevention, baking for hunger prevention, and has been in a committed relationship with her husband Elijah for nearly 5 years including 2 years of marriage. Grace is a 26 year old designer who loves sharing in her love of good food, talking about art and a good tv show.", 
-    description: 'In today’s age, dating is more complicated than it ever has been. But have you ever thought to slow down and rediscover who you are in Christ before first navigating relationships? Whether you’re single, dating, or figuring things out, this workshop is about grounding yourself in God’s truth so you don’t lose yourself in the process.',
+    id: 'w8', title: 'Women Dating', speaker: 'Belle Seow / Grace Leong?', category: 'Relationships',
+    biography: "Belle is 30 and in a committed relationship. Grace is a 26 year old designer.", 
+    description: 'Grounding yourself in God’s truth so you don’t lose yourself in the process.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w9', 
-    title: 'Demons in Christians?', 
-    speaker: 'Charles Ho', 
-    category: 'Theology',
-    biography: 'We currently leading the Shalom Ministry, which is the Inner Healing and Deliverance (IHD) Ministry in FGAM. We have been involved in IHD in and outside of FGAM for many years and have led mission trips focusing on IHD to Thailand and Laos.', 
-    description: 'Demons cannot have Christians but Christians can have demons! Demons are for real but we need to recognise them. This workshop will cover how Christians may experience demonic oppression. We’ll look at the open doors that allow such oppression and the ways it can affect us mentally, physically, and spiritually.',
+    id: 'w9', title: 'Demons in Christians?', speaker: 'Charles Ho', category: 'Theology',
+    biography: 'Leaders of the Shalom Ministry in FGAM.', 
+    description: 'Recognizing demonic oppression and practical steps toward freedom.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Classroom (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w10', 
-    title: 'Sex in the Suburbs', 
-    speaker: 'Daniel and Julie Wong', 
-    category: 'Marriage',
-    biography: "Julie and Daniel Wong have been married for 37 years, with 4 adult children and 4 grandchildren. Daniel has his own AI business and Julie is a paediatric Occupational Therapist, with 34 years of counselling experience.", 
-    description: 'Sexual intimacy in marriage was designed by God to bring joy and fulfillment. In this workshop, we are going to talk about the joys of marital sex, as well as discussing some of the barriers that married couples face in intimacy and how to overcome them.',
+    id: 'w10', title: 'Sex in the Suburbs', speaker: 'Daniel and Julie Wong', category: 'Marriage',
+    biography: "Julie and Daniel Wong have been married for 37 years, with 4 children.", 
+    description: 'Discussing the joys of marital sex and how to overcome barriers to intimacy.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Main Area (61 Lexton Road)' },
       { day: 'Sun', time: '2:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w11', 
-    title: 'Running', 
-    speaker: 'David Gunn, Michelle Tsiros and Dennis Wong', 
-    category: 'Health',
-    biography: 'David “Gunny” Gunn, Michelle Tsiros, and Dr Dennis Wong are all passionate about the benefits of running for physical, mental, and spiritual health.', 
-    description: 'What Are You Running Towards? Through honest beginner experiences along with a clear and practical look at the science of movement, we’ll explore how running reshapes the brain, steadies emotions, and builds calm under pressure.',
+    id: 'w11', title: 'Running', speaker: 'David Gunn, Michelle Tsiros and Dennis Wong', category: 'Health',
+    biography: 'Passionate runners believing in physical, mental, and spiritual health benefits.', 
+    description: 'Reframes running as a powerful signal to the mind that builds capacity and long-term health.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' },
       { day: 'Sun', time: '9:30 AM', room: 'Dance Studio 2 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w12', 
-    title: 'Gut & Brain', 
-    speaker: 'Dr. Dennis Wong', 
-    category: 'Health',
-    biography: 'Dr Huang (Dennis) S. Wong, MBA FRACP BMBS, is a medical doctor and aged-care leader with a strong interest in brain health, dementia prevention, and the role of diet and daily lifestyle in protecting memory.', 
-    description: 'Our Gut–Brain Axis Workshop is a practical, science-grounded, and culturally sensitive exploration of how what we eat shapes how we think, feel, and age.',
+    id: 'w12', title: 'Gut & Brain', speaker: 'Dr. Dennis Wong', category: 'Health',
+    biography: 'Medical doctor with a strong interest in brain health and dementia prevention.', 
+    description: 'A practical, science-grounded exploration of how what we eat shapes how we think and age.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Dance Studio 2 (7/41 Lexton Road)' },
       { day: 'Sun', time: '12:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w13', 
-    title: 'Menopause Questions', 
-    speaker: 'Dr. Sze Wey Lee', 
-    category: 'Health',
-    biography: 'I’m Sze Lee and I’m an obstetrician and gynaecologist based at Epworth Freemasons in East Melbourne. I have had the privilege of journeying with women through the many stages of their reproductive life for almost 20 years.', 
-    description: 'Menopause is often misunderstood and there are myths galore about what the symptoms of menopause are, what can be done about them and the pros and cons of managements.',
+    id: 'w13', title: 'Menopause Questions', speaker: 'Dr. Sze Wey Lee', category: 'Health',
+    biography: 'Obstetrician and gynaecologist based in East Melbourne with 20 years of experience.', 
+    description: 'Addressing the symptoms of menopause, management options, and Q&A.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w14', 
-    title: 'Life Vision Board', 
-    speaker: 'Elaine Choi', 
-    category: 'Personal Growth',
-    biography: 'Elaine Choi is a trainer and facilitator with a heart for guiding women through seasons of transition. As the founder of Eltitude Collective, she combines structured learning tools with prayerful reflection.', 
-    description: 'In this workshop, participants will explore what it means to align their lives with God’s purpose, rather than personal pressure or comparison.',
+    id: 'w14', title: 'Life Vision Board', speaker: 'Elaine Choi', category: 'Personal Growth',
+    biography: 'Trainer and facilitator with a heart for guiding women through seasons of transition.', 
+    description: 'Aligning your life with God’s purpose rather than personal pressure.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' },
       { day: 'Sun', time: '12:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w15', 
-    title: 'Know Your WHY', 
-    speaker: 'Elijah Seow', 
-    category: 'Purpose',
-    biography: 'Elijah is 29 years of age and has been following Christ for the past 12 years of his life with a passion for faith shown through action in his choice of work and ministry.', 
-    description: 'Why do you do what you do? When misdirected - social commitments, work, family obligations, and even ministry can all lead to exhaustion, frustration, and even burnout.',
+    id: 'w15', title: 'Know Your WHY', speaker: 'Elijah Seow', category: 'Purpose',
+    biography: 'Following Christ for 12 years with a heart for transparency and faith shown through action.', 
+    description: 'Investigate the core motivations behind your life to avoid distraction and burnout.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '9:30 AM', room: 'Classroom (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w16', 
-    title: 'Men Dating', 
-    speaker: 'Elijah Seow/Daniel Ong', 
-    category: 'Relationships',
-    biography: 'Elijah (29) is newly married, celebrating two years in July; Dong (30) is currently engaged and draws from his experiences in current/prior relationships.', 
-    description: 'We’re hosting a joint talk for young adults for men with a focus on navigating ‘dating’ today, how to do it well by sharing our perspectives, led by Elijah and Daniel (Dong).',
+    id: 'w16', title: 'Men Dating', speaker: 'Elijah Seow/Daniel Ong', category: 'Relationships',
+    biography: 'Elijah is newly married; Dong is currently engaged. Both bring personal insights.', 
+    description: 'Exploring the biblical purpose of dating while addressing leadership and maturity.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w17', 
-    title: 'Beyond Possible', 
-    speaker: 'Evelyn Seow', 
-    category: 'Theology',
-    biography: 'With over four decades of ministry experience, Evelyn Seow is a pioneering leader dedicated to empowering Christians to walk in the supernatural in God’s Kingdom.', 
-    description: 'The earth is groaning for the manifestation of the Sons of God. Jesus promised that "greater works shall we do," and this workshop will provide the biblical steps to manifest the Kingdom.',
+    id: 'w17', title: 'Beyond Possible', speaker: 'Evelyn Seow', category: 'Theology',
+    biography: 'Pioneering leader with over four decades of experience walking in the supernatural.', 
+    description: 'Biblical steps to manifest the Kingdom and experience God’s dimensional power.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Main Space (4/41 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w18', 
-    title: 'Homeschool Life', 
-    speaker: 'Ewnice Teh (and Tim)', 
-    category: 'Parenting',
-    biography: 'Ewnice has been married to her husband Tim for 15 years. FGA has been her church home for over 20 years. For the past two years, Ewnice has embraced homeschooling.', 
-    description: 'In this workshop, I’ll be sharing my testimony of why we chose to homeschool and how it has allowed our family to reclaim our time and our children’s childhood.',
+    id: 'w18', title: 'Homeschool Life', speaker: 'Ewnice Teh (and Tim)', category: 'Parenting',
+    biography: 'Raising three children while managing online businesses; homeschooling for two years.', 
+    description: 'Testimony of reclaiming time and ensuring parents remain the primary influence on faith.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w19', 
-    title: 'Meet Meat', 
-    speaker: 'Jean-Paul Seow', 
-    category: 'Cooking',
-    biography: 'Culinary enthusiast based at FGAM.', 
-    description: 'If you love steak, this one’s for you! Learn about different cuts, seasoning tricks, cooking techniques, and how to get restaurant-quality results at home.',
+    id: 'w19', title: 'Meet Meat', speaker: 'Jean-Paul Seow', category: 'Cooking',
+    biography: 'Culinary enthusiast with hard-won knowledge in home meat preparation.', 
+    description: 'Learn about cuts, seasoning tricks, and how to get restaurant-quality steak at home.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Rooftop (FGA Melbourne)' },
       { day: 'Sun', time: '10:30 AM', room: 'Rooftop (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w20', 
-    title: 'Motorhome Life', 
-    speaker: 'Jit Lim', 
-    category: 'Lifestyle',
-    biography: 'Long-time member of FGAM with a heart for adventure.', 
-    description: 'Betty and I went around Australia in three winters on the road. We are very keen to share our experiences and fond memories so that some of us can capture the vision.',
+    id: 'w20', title: 'Motorhome Life', speaker: 'Jit Lim', category: 'Lifestyle',
+    biography: 'Long-time member of FGAM with a heart for capturing visions of the road.', 
+    description: 'Sharing fond memories from three winters on the road traveling around Australia.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w21', 
-    title: 'Unexpected Life', 
-    speaker: 'Josh So and Mel Cheung', 
-    category: 'Testimony',
-    biography: 'Josh and Mel have been together for 11 years and married for 5. They have called FGAM home for the past three years. Josh serves in the coffee ministry.', 
-    description: 'Drawing from Romans 5:3–4 and Romans 8:26–28, this workshop explores how God works through seasons of waiting, suffering, and uncertainty to produce perseverance.',
+    id: 'w21', title: 'Unexpected Life', speaker: 'Josh So and Mel Cheung', category: 'Testimony',
+    biography: 'Josh serves in coffee ministry; Mel leads a young families home group.', 
+    description: 'Vulnerable look at an 11-year journey through seasons of waiting and suffering.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w22', 
-    title: 'Worship Unveiled', 
-    speaker: 'Kim Teh', 
-    category: 'Arts',
-    biography: 'Kim is a passionate dance choreographer and teacher. She especially loves facilitating individuals to discover their hidden dancer for God.', 
-    description: 'Discover a space where movement becomes prayer and creative expression unfolds to encounter with God.',
+    id: 'w22', title: 'Worship Unveiled', speaker: 'Kim Teh', category: 'Arts',
+    biography: 'Passionate choreographer specializing in discovering the hidden dancer for God.', 
+    description: 'Spirit-led space where movement becomes prayer and creative expression.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Dance Studio 1 (7/41 Lexton Road)' },
       { day: 'Sun', time: '9:30 AM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w23', 
-    title: 'Teen Mental Health', 
-    speaker: 'Marie Yap (OAM)', 
-    category: 'Parenting',
-    biography: 'Marie is a Professor of Psychology at Monash University. Her research specialises in child and adolescent mental health.', 
-    description: 'Mental health has become a more widely-known term. As parents or other adults who care for teenagers, there are things we can do to support our young people’s mental health.',
+    id: 'w23', title: 'Teen Mental Health', speaker: 'Marie Yap (OAM)', category: 'Parenting',
+    biography: 'Professor of Psychology at Monash University specializing in adolescent mental health.', 
+    description: 'Practical and spiritual strategies parents can use to support young people’s wellbeing.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Main Area (61 Lexton Road)' },
       { day: 'Sun', time: '9:30 AM', room: 'Main Area (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w24', 
-    title: 'Parenting Expectations', 
-    speaker: 'May Yen Ong', 
-    category: 'Parenting',
-    biography: 'May Yen Ong is deeply passionate about seeing families flourish. Married for 28 years and a mother of three young adults.', 
-    description: 'When our children grow into teens and young adults, they naturally seek independence. In this workshop, May will share personal insights on navigating changing expectations.',
+    id: 'w24', title: 'Parenting Expectations', speaker: 'May Yen Ong', category: 'Parenting',
+    biography: 'Served in ministry for over 20 years; postgraduate qualification in Christian Counselling.', 
+    description: 'Navigating changing expectations as children seek independence while maintaining strong bonds.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w25', 
-    title: 'God’s Will', 
-    speaker: 'Michael Ting / Stephanie Lok', 
-    category: 'Young Adult/High School',
-    biography: 'Mike currently runs the young adults ministry, 1830. Steph is a nurse and a young adult who is actively living the question herself.', 
-    description: '"What does God actually want for my life?" Drawing from lived experience, they\'ll offer some guideposts for young adults wrestling with the same question.',
+    id: 'w25', title: 'God’s Will', speaker: 'Michael Ting / Stephanie Lok', category: 'Young Adult/High School',
+    biography: 'Mike runs 1830; Steph is a nurse actively living the search for God’s plan.', 
+    description: 'Honest search for guideposts in discerning God’s will based on lived experience.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '9:30 AM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w26', 
-    title: 'Simple Cooking', 
-    speaker: 'Min Leong Ong', 
-    category: 'Cooking',
-    biography: 'Min Leong is an experienced home cook and frequent volunteer in the FGAM kitchen.', 
-    description: 'Back by popular demand, Min Leong hosts a live food demonstration focused on effortless cooking, perfect for individuals or families.',
+    id: 'w26', title: 'Simple Cooking', speaker: 'Min Leong Ong', category: 'Cooking',
+    biography: 'Experienced FGAM kitchen volunteer and home cooking specialist.', 
+    description: 'Effortless cooking demonstration perfect for individuals or busy families.',
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Lobby (FGA Melbourne)' },
       { day: 'Sun', time: '9:30 AM', room: 'Lobby (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w27', 
-    title: 'Domestic Violence', 
-    speaker: 'Mona Julien', 
-    category: 'Care',
-    biography: 'Mona has a Diploma in Christian Counselling and a Graduate Certificate in Social Inclusion. She has worked alongside families for over two decades.', 
-    description: 'This workshop is a real, down‑to‑earth community talk about what domestic violence can look like when it’s hidden from view.',
+    id: 'w27', title: 'Domestic Violence', speaker: 'Mona Julien', category: 'Care',
+    biography: 'Trauma recovery specialist with a Diploma in Christian Counselling.', 
+    description: 'Real community talk about hidden domestic violence and what supportive responses look like.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Main Space (4/41 Lexton Road)' },
       { day: 'Sun', time: '2:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w28', 
-    title: 'Sanctification and Success', 
-    speaker: 'Nev Waterman', 
-    category: 'Leadership',
-    biography: 'Nev is a Christian husband, father, and business leader who has spent many years walking alongside men in both church and everyday life.', 
-    description: 'Grow in faith, character, and confidence as you learn to follow Christ in a complex world.',
+    id: 'w28', title: 'Sanctification and Success', speaker: 'Nev Waterman', category: 'Leadership',
+    biography: 'Business leader and husband with many years of church leadership experience.', 
+    description: 'Biblical wisdom on growing in faith while navigating a complex professional world.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Main Area (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w29', 
-    title: 'Grief & Loss', 
-    speaker: 'Ps. Andrew Harper', 
-    category: 'Care',
-    biography: 'Ps. Andrew has served in various church pastoral and leadership roles since 1987. Between 2014-2025 Andrew served as a hospital chaplain.', 
-    description: 'Drawing on his 11 years serving as a hospital chaplain, Ps. Andrew Harper will discuss the journey of grief.',
+    id: 'w29', title: 'Grief & Loss', speaker: 'Ps. Andrew Harper', category: 'Care',
+    biography: 'Hospital chaplain for 11 years; pastoral leader since 1987.', 
+    description: 'Journeying through loss and encountering God in painful seasons.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w30', 
-    title: 'Advanced Bible Study', 
-    speaker: 'Ps. Andrew Harper', 
-    category: 'Theology',
-    biography: 'Ps. Andrew has served in pastoral and leadership roles since 1987 and was a hospital chaplain for over a decade.', 
-    description: 'A deep dive into advanced biblical study and hermeneutics.',
+    id: 'w30', title: 'Advanced Bible Study', speaker: 'Ps. Andrew Harper', category: 'Theology',
+    biography: 'Pastoral leader and teacher to pastoral care students since 1987.', 
+    description: 'Deep dive into scriptural study and interpretative frameworks.',
     sessions: [
       { day: 'Sat', time: '12:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w31', 
-    title: 'Following God\'s Calling', 
-    speaker: 'Ps. Roland Seow', 
-    category: 'Testimony',
-    biography: 'Ps Roland is the Founding Pastor of FGA Melbourne with a passion for missions and families. He facilitates restoration for Pastors through IPIN.', 
-    description: 'This workshop chronicles FGAM\'s formation story to help participants discern God\'s voice amid life\'s uncertainties.',
+    id: 'w31', title: 'Following God\'s Calling', speaker: 'Ps. Roland Seow', category: 'Testimony',
+    biography: 'Founding Pastor of FGA Melbourne with a heart for missions and families.', 
+    description: 'The FGA journey: discerning God’s voice amid uncertainties and estabelecer core values.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w32', 
-    title: 'Healing Parental Hurt', 
-    speaker: 'Sarah Man and Lai Hing', 
-    category: 'Family',
-    biography: 'Lai Hing is a social worker and Sarah is a counsellor. They serve at FGA and work in social inclusion.', 
-    description: 'Hear a mother and daughter’s personal testimony about how parents can model Christlike humility in addressing and repairing relational hurts.',
+    id: 'w32', title: 'Healing Parental Hurt', speaker: 'Sarah Man and Lai Hing', category: 'Family',
+    biography: 'Mother and daughter serving in counselling and social inclusion roles.', 
+    description: 'Testimony on modeling Christlike humility to repair hurts across generations.',
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Main Area (61 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Main Area (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w33', 
-    title: 'Spirit-Led Parenting', 
-    speaker: 'Sonja Loke', 
-    category: 'Young Families',
-    biography: 'Sonja is the Kids Pastor at FGA Kids and a mother of four. She has deep reliance on the Holy Spirit\'s guidance in everyday family life.', 
-    description: 'Discover how inviting the Holy Spirit into your parenting journey—from sleepless nights to challenging conversations—can transform how you respond to your children.',
+    id: 'w33', title: 'Spirit-Led Parenting', speaker: 'Sonja Loke', category: 'Young Families',
+    biography: 'Kids Pastor at FGA; teacher’s aide and mother of four.', 
+    description: 'Discover how inviting the Holy Spirit into daily parenting transforms your responses.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w34', 
-    title: 'Financial Freedom', 
-    speaker: 'Wally Chiang', 
-    category: 'Finance',
-    biography: 'Wally retired at 41 after reaching financial independence. He is the founder of FAT FIRE Australia.', 
-    description: 'Gain a clearer understanding of what true financial freedom means through a practical framework grounded in timeless biblical principles.',
+    id: 'w34', title: 'Financial Freedom', speaker: 'Wally Chiang', category: 'Finance',
+    biography: 'Entrepreneur who retired at 41; founder of FAT FIRE Australia.', 
+    description: 'Biblical principles for financial stewardship beyond just wealth creation.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Main Space (4/41 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w35', 
-    title: 'Missions Topic', 
-    speaker: 'Chai Ng', 
-    category: 'Missions',
-    biography: 'TBC', 
-    description: 'We are called to missions. Exploring the heart of God for the local and global field.',
+    id: 'w35', title: 'Missions Topic', speaker: 'Chai Ng', category: 'Missions',
+    biography: 'Passionate for local and global missions.', 
+    description: 'Exploring the heart of God for the mission field today.',
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Classroom (61 Lexton Road)' },
       { day: 'Sun', time: '12:00 PM', room: 'Classroom (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w36', 
-    title: 'Family Activity', 
-    speaker: 'Harold Nguyen', 
-    category: 'Family',
-    biography: 'TBC', 
-    description: 'A fun stage activity designed for all families to enjoy together.',
+    id: 'w36', title: 'Family Activity', speaker: 'Harold Nguyen', category: 'Family',
+    biography: 'Active member with a heart for family engagement.', 
+    description: 'Stage activity designed for families to connect and have fun together.',
     sessions: [
       { day: 'Sat', time: '1:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w37', 
-    title: 'Grow in Worship', 
-    speaker: 'Iain Low', 
-    category: 'Worship',
-    biography: 'TBC', 
-    description: 'Learn how a life of worship contributes to spiritual growth from a life-long worshiper. Tap into the heart of worship.',
+    id: 'w37', title: 'Grow in Worship', speaker: 'Iain Low', category: 'Worship',
+    biography: 'Lifelong worshiper with a heart for the presence of God.', 
+    description: 'Tapping into the heart of worship to fuel spiritual growth.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Dance Studio 2 (7/41 Lexton Road)' },
       { day: 'Sun', time: '10:30 AM', room: 'Dance Studio 2 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w38', 
-    title: 'Living with Disability', 
-    speaker: 'Ivan Low', 
-    category: 'Lifestyle',
-    biography: 'TBC', 
-    description: 'A lived testimony about disability. How God walks with you and how to deal with the challenges one faces.',
+    id: 'w38', title: 'Living with Disability', speaker: 'Ivan Low', category: 'Lifestyle',
+    biography: 'Lived testimony of walking with God through physical challenges.', 
+    description: 'How God walks with you through life’s toughest hurdles.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Sanctuary (FGA Melbourne)' },
       { day: 'Sun', time: '12:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w39', 
-    title: 'Counselling Options', 
-    speaker: 'Matt Jones', 
-    category: 'Care',
-    biography: 'Matt Jones is Head of Crossway LifeCare. He is an ordained Baptist minister with 20 years of pastoral care experience.', 
-    description: 'When is it appropriate to refer to professional care? We will be exploring these challenges to give you greater confidence to care.',
+    id: 'w39', title: 'Counselling Options', speaker: 'Matt Jones', category: 'Care',
+    biography: 'Head of Crossway LifeCare and ordained Baptist minister.', 
+    description: 'Practical guidance on when and how to refer loved ones to professional care.',
     sessions: [
       { day: 'Sun', time: '9:30 AM', room: 'Meeting Room (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w40', 
-    title: 'Apologetics', 
-    speaker: 'Peggy Ong', 
-    category: 'Theology',
-    biography: 'TBC', 
-    description: 'Learn how to defend your faith from Bible scholar and FGAM church elder Aunty Peggy.',
+    id: 'w40', title: 'Apologetics', speaker: 'Peggy Ong', category: 'Theology',
+    biography: 'Church elder and Bible scholar at FGAM.', 
+    description: 'Defending your faith with confidence in a modern secular world.',
     sessions: [
       { day: 'Sat', time: '3:00 PM', room: 'Main Space (4/41 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w41', 
-    title: 'Steps for Staying Faithful', 
-    speaker: 'Peggy Ong', 
-    category: 'Faith',
-    biography: 'TBC', 
-    description: 'How to remain faithful as a Christian. Suitable for all ages of spiritual maturity.',
+    id: 'w41', title: 'Steps for Staying Faithful', speaker: 'Peggy Ong', category: 'Faith',
+    biography: 'Experienced FGAM church elder with a heart for spiritual maturity.', 
+    description: 'Habits for maintaining a faithful Christian walk across all life stages.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w42', 
-    title: 'No Burnouts', 
-    speaker: 'Albert Lee', 
-    category: 'Leadership',
-    biography: 'Seasoned commercial executive with over 30 years of multinationals experience.', 
-    description: 'Move beyond the cliché of "doing less" to the art of leading better. Come learn how to be a leader who burns with passion but is not consumed.',
+    id: 'w42', title: 'No Burnouts', speaker: 'Albert Lee', category: 'Leadership',
+    biography: 'Corporate executive with hard-won wisdom from corporate and ministry burnout.', 
+    description: 'Moving beyond "doing less" to a survival strategy for passionate longevity.',
     sessions: [
       { day: 'Sat', time: '2:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w43', 
-    title: 'Decision Fatigue', 
-    speaker: 'Ps. Chris Ong', 
-    category: 'Leadership',
-    biography: 'Senior Pastor with decades of leadership experience.', 
-    description: 'Unpack why decision fatigue is common and how to approach making choices more wisely with simple tools and frameworks.',
+    id: 'w43', title: 'Decision Fatigue', speaker: 'Ps. Chris Ong', category: 'Leadership',
+    biography: 'Senior Pastor with decades of practical leadership experience.', 
+    description: 'Frameworks to handle constant choices with less stress and more clarity.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Main Area (61 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Main Area (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w44', 
-    title: 'Things We Don\'t Talk About in the Journey', 
-    speaker: 'Ps. Chris Ong', 
-    category: 'Testimony',
-    biography: 'Ps Chris Ong reflects honestly on the hidden costs and trials that shape a 30-year journey.', 
-    description: 'This unrecorded workshop creates space to tell the fuller story of FGA’s journey. It is an invitation to see faith and leadership as they really are.',
+    id: 'w44', title: 'Things We Don\'t Talk About in the Journey', speaker: 'Ps. Chris Ong', category: 'Testimony',
+    biography: 'Reflections from 30 years in pastoral ministry.', 
+    description: 'Honest stories of the hidden costs and trials often left out of growth narratives.',
     sessions: [
       { day: 'Sun', time: '2:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w45', 
-    title: 'Honesty', 
-    speaker: 'Ps. Isaac Ling', 
-    category: 'ALL',
-    biography: 'TBC', 
-    description: 'How to live an honest, transparent God-honoring life and why doing so is pleasing to God.',
+    id: 'w45', title: 'Honesty', speaker: 'Ps. Isaac Ling', category: 'ALL',
+    biography: 'Leader with a heart for transparent living.', 
+    description: 'Exploring why an honest life is pleasing to God and the consequences of hiddenness.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Main Area (61 Lexton Road)' },
       { day: 'Sun', time: '12:00 PM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w46', 
-    title: 'Spiritual Ministry', 
-    speaker: 'Ps. Isaac Ling', 
-    category: 'Ministry',
-    biography: 'TBC', 
-    description: 'Come for a time of spiritual ministry with Ps. Isaac Ling.',
+    id: 'w46', title: 'Spiritual Ministry', speaker: 'Ps. Isaac Ling', category: 'Ministry',
+    biography: 'Experienced spirit-led prayer leader.', 
+    description: 'Dedicated time for individual prayer and spiritual ministry.',
     sessions: [
       { day: 'Sun', time: '9:30 AM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w47', 
-    title: 'Older Fitness', 
-    speaker: 'Tim Tan', 
-    category: 'Health',
-    biography: 'Timothy is a chiropractor passionate about empowering older generations to feel as strong as they did in their 20’s.', 
-    description: 'Unpack what it truly means to honour God with our bodies as temples of the Holy Spirit. Beginner-friendly class included.',
+    id: 'w47', title: 'Older Fitness', speaker: 'Tim Tan', category: 'Health',
+    biography: 'Chiropractor passionate about empowering older generations to stay mobile.', 
+    description: 'Beginner-friendly stretches to honour God with your body as His temple.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Dance Studio 1 (7/41 Lexton Road)' },
       { day: 'Sun', time: '1:00 PM', room: 'Dance Studio 1 (7/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w48', 
-    title: 'Youth are Leaders Today', 
-    speaker: 'JP/Jordan', 
-    category: 'Parents of Teens',
-    biography: 'TBC', 
-    description: 'A youth-led, testimony-based session demonstrating how young people are already serving and representing Christ today.',
+    id: 'w48', title: 'Youth are Leaders Today', speaker: 'JP/Jordan', category: 'Parents of Teens',
+    biography: 'Youth leaders dedicated to intergenerational discipleship.', 
+    description: 'Testimony-based session showing how youth are active contributors to God’s mission.',
     sessions: [
       { day: 'Sun', time: '12:00 PM', room: 'Main Area (61 Lexton Road)' }
     ]
   },
   { 
-    id: 'w49', 
-    title: 'My Faith, My Journey (Youth)', 
-    speaker: 'TBC', 
-    category: 'Youth',
+    id: 'w49', title: 'My Faith, My Journey (Youth)', speaker: 'TBC', category: 'Youth',
     biography: 'TBC', 
-    description: 'Explores how God works through everyday faithfulness and ongoing journeys. Recognise that everyone has a testimony worth offering.',
+    description: 'A safe space for youth to explore their own testimonies of everyday faithfulness.',
     sessions: [
       { day: 'Sat', time: '9:30 AM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w50', 
-    title: 'Live It Out! (Youth)', 
-    speaker: 'TBC', 
-    category: 'Youth',
+    id: 'w50', title: 'Live It Out! (Youth)', speaker: 'TBC', category: 'Youth',
     biography: 'TBC', 
-    description: 'Explore what it means to live out faith through service, hospitality, and character. Panel features Kevin Wong, Bella Deltondo, and Hajin You.',
+    description: 'Panel featuring young leaders on how service and character reflect Christ daily.',
     sessions: [
       { day: 'Sat', time: '10:30 AM', room: 'Main Space (4/41 Lexton Road)' }
     ]
   },
   { 
-    id: 'w51', 
-    title: 'Youth Presentation Activity', 
-    speaker: 'TBC', 
-    category: 'Youth',
+    id: 'w51', title: 'Youth Presentation Activity', speaker: 'TBC', category: 'Youth',
     biography: 'TBC', 
-    description: 'Workshop presentation activity for youth.',
+    description: 'Interactive presentation workshop for youth groups.',
     sessions: [
       { day: 'Sun', time: '1:00 PM', room: 'Sanctuary (FGA Melbourne)' }
     ]
   },
   { 
-    id: 'w52', 
-    title: 'Designing A Youth Service (Youth)', 
-    speaker: 'TBC', 
-    category: 'Youth',
+    id: 'w52', title: 'Designing A Youth Service (Youth)', speaker: 'TBC', category: 'Youth',
     biography: 'TBC', 
-    description: 'A curated program of youth-led stories celebrating the voices of young people and the vibrancy of next-gen faith.',
+    description: 'Celebrating youth voices and testimonies through curation and communication skills.',
     sessions: [
       { day: 'Sun', time: '2:00 PM', room: 'Main Area (61 Lexton Road)' }
     ]
-  },
-  { 
-    id: 'w53', 
-    title: 'Designing A Youth Service', 
-    speaker: 'TBC', 
-    category: 'Youth',
-    biography: 'TBC', 
-    description: 'Vibrant next-gen faith showcased through youth testimonies.',
-    sessions: []
   },
 ];
 
@@ -733,7 +570,7 @@ const MASTER_SCHEDULE = [
   }
 ];
 
-// --- HELPERS ---
+// --- OPTIMIZED HELPERS ---
 
 function normalizeString(str) {
   if (!str) return '';
@@ -742,14 +579,6 @@ function normalizeString(str) {
     .replace(/['"“”‘’]/g, '') 
     .replace(/[—–-]/g, '-')   
     .trim();
-}
-
-function getSafeField(row, fieldName) {
-  if (!row) return '';
-  const cleanTarget = fieldName.trim().toLowerCase();
-  const actualKey = Object.keys(row).find(k => k.trim().toLowerCase() === cleanTarget);
-  const value = actualKey ? row[actualKey] : '';
-  return (value || '').toString().trim();
 }
 
 function parseCSV(text) {
@@ -792,7 +621,7 @@ function ExpandableText({ text, maxLength = 120, className = "text-gray-600 text
   );
 }
 
-function DaySelector({ selectedDay, onDayChange }) {
+const DaySelector = React.memo(({ selectedDay, onDayChange }) => {
   const days = ['Friday', 'Saturday', 'Sunday'];
   return (
     <div className="sticky top-0 bg-[#FCF5EB]/95 backdrop-blur-sm z-10 py-4 border-b border-[#E8BA21]/20 mb-6">
@@ -809,7 +638,7 @@ function DaySelector({ selectedDay, onDayChange }) {
       </div>
     </div>
   );
-}
+});
 
 function WorkshopDetailView({ workshop, onBack }) {
   if (!workshop) return null;
@@ -875,29 +704,48 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDay, setSelectedDay] = useState('Friday');
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  // Lookup Optimization: One-time calculation
+  const workshopLookupMap = useMemo(() => {
+    const map = new Map();
+    WORKSHOPS_DATA.forEach(w => {
+      map.set(w.id.toLowerCase(), w);
+      map.set(normalizeString(w.title), w);
+    });
+    return map;
+  }, []);
+
+  const handleLogin = useCallback(async (e) => {
+    if (e) e.preventDefault();
     if (!email.trim()) return;
     setIsLoading(true);
     setError('');
     const emailStr = email.trim().toLowerCase();
     
     try {
+      // Sync without cache-busting as per request (simpler fetch)
       const response = await fetch(LINKS.itineraries);
       const csvText = await response.text();
       const data = parseCSV(csvText);
-      const users = data.filter(row => getSafeField(row, 'Email').toLowerCase() === emailStr);
+      const users = data.filter(row => {
+        const rowEmail = (row['Email'] || row['email'] || '').toString().trim().toLowerCase();
+        return rowEmail === emailStr;
+      });
+
       if (users.length === 1) processUser(users[0]);
       else if (users.length > 1) setMatchingUsers(users);
       else setError("Registration not found. Please check your spelling.");
-    } catch (err) { setError("Unable to sync. Please check your internet connection."); }
-    finally { setIsLoading(false); }
-  };
+    } catch (err) { 
+      setError("Sync error. Please check your connection."); 
+    } finally { 
+      setIsLoading(false); 
+    }
+  }, [email]);
 
   const processUser = (row) => {
-    const fName = getSafeField(row, 'Name (First)');
-    const lName = getSafeField(row, 'Name (Last)');
-    const fullName = `${fName} ${lName}`.trim() || getSafeField(row, 'Email').split('@')[0];
+    const fName = row['Name (First)'] || row['name(first)'] || '';
+    const lName = row['Name (Last)'] || row['name(last)'] || '';
+    const emailAddr = row['Email'] || row['email'] || '';
+    const fullName = `${fName} ${lName}`.trim() || emailAddr.split('@')[0];
     
     const userWorkshops = {};
     const identityKeys = ['email', 'name(first)', 'name(last)', 'name'];
@@ -910,8 +758,7 @@ export default function App() {
         const technicalId = Object.keys(SLOT_HEADER_MAP).find(id => 
           SLOT_HEADER_MAP[id].some(alias => alias === key)
         );
-        if (technicalId) userWorkshops[technicalId] = val;
-        else userWorkshops[key] = val; 
+        userWorkshops[technicalId || key] = val;
       }
     });
 
@@ -920,20 +767,26 @@ export default function App() {
     setSelectedDay('Saturday');
   };
 
-  const filteredWorkshops = WORKSHOPS_DATA.filter(w => 
-    w.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    w.speaker.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoized Search Results
+  const filteredWorkshops = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    if (!term) return WORKSHOPS_DATA;
+    return WORKSHOPS_DATA.filter(w => 
+      w.title.toLowerCase().includes(term) || 
+      w.speaker.toLowerCase().includes(term) ||
+      (w.category && w.category.toLowerCase().includes(term))
+    );
+  }, [searchTerm]);
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
-      <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 shadow-sm shrink-0">
-        <div className="max-w-2xl mx-auto p-5 flex justify-between items-center">
-          <img src={LOGO_URL} className="h-10 md:h-12 object-contain" alt="WISH Logo" />
+      <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 shadow-sm shrink-0 h-20">
+        <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
+          <img src={LOGO_URL} className="h-10 md:h-12 w-auto object-contain" alt="WISH Logo" style={{ aspectRatio: '3/1' }} />
           {currentUser && (
             <div className="flex items-center gap-3">
-              <span className="hidden sm:block text-xs font-bold text-gray-500 uppercase">{currentUser.name}</span>
-              <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-200 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{currentUser.name.charAt(0)}</div>
+              <span className="hidden sm:block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{currentUser.name}</span>
+              <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{currentUser.name.charAt(0)}</div>
             </div>
           )}
         </div>
@@ -941,7 +794,7 @@ export default function App() {
 
       <main className="flex-1 flex flex-col relative text-balance">
         {selectedWorkshopId ? (
-          <WorkshopDetailView workshop={WORKSHOPS_DATA.find(w => w.id.toLowerCase() === selectedWorkshopId.toLowerCase())} onBack={() => setSelectedWorkshopId(null)} />
+          <WorkshopDetailView workshop={workshopLookupMap.get(selectedWorkshopId.toLowerCase())} onBack={() => setSelectedWorkshopId(null)} />
         ) : (
           <div className="max-w-2xl w-full mx-auto p-6 pb-32">
             {activeTab === 'my-wish' && (
@@ -956,10 +809,7 @@ export default function App() {
                     <div key={`personal-day-${day.date}`} className="space-y-6">
                       {day.events.map((event) => {
                         const userWorkshopValue = currentUser.workshops[event.id.toLowerCase()] || '';
-                        const workshop = WORKSHOPS_DATA.find(w => 
-                          w.id.toLowerCase() === userWorkshopValue.toLowerCase().trim() ||
-                          normalizeString(w.title) === normalizeString(userWorkshopValue)
-                        );
+                        const workshop = workshopLookupMap.get(userWorkshopValue.toLowerCase().trim()) || workshopLookupMap.get(normalizeString(userWorkshopValue));
                         
                         const sessionMatch = workshop?.sessions?.find(s => 
                            s.time === event.time && (
@@ -975,17 +825,11 @@ export default function App() {
                         return (
                           <div key={`personal-ev-${event.id}`} className="flex gap-4 items-start">
                             <div className="w-16 shrink-0 pt-4 text-right font-bold text-gray-400 text-sm">{event.time}</div>
-                            <div 
-                              className={`flex-1 p-5 rounded-3xl border transition-all ${isPersonalized ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white border-gray-100 shadow-sm'} relative overflow-hidden`} onClick={() => isPersonalized ? setSelectedWorkshopId(workshop.id) : null}
-                            >
+                            <div className={`flex-1 p-5 rounded-3xl border transition-all ${isPersonalized ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white border-gray-100 shadow-sm'} relative overflow-hidden`} onClick={() => isPersonalized ? setSelectedWorkshopId(workshop.id) : null}>
                               {(isPersonalized || event.type === 'main') && <div className={`absolute top-0 left-0 w-1.5 h-full ${event.type === 'main' ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}
                               <h4 className={`font-bold text-gray-900 leading-snug text-lg ${isPending ? 'italic text-gray-400' : ''}`}>{workshop ? workshop.title : (isPending ? 'Choice Pending' : event.title)}</h4>
                               {workshop && <p className="text-sm text-[#ED4E23] mt-1 font-bold">with {workshop.speaker}</p>}
-                              
-                              <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 font-semibold uppercase tracking-wider">
-                                <MapPin size={13} /> 
-                                {sessionMatch ? sessionMatch.room : (event.location || (workshop ? 'Multiple Rooms' : 'TBA'))}
-                              </div>
+                              <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-500 font-semibold uppercase tracking-wider"><MapPin size={13} /> {sessionMatch ? sessionMatch.room : (event.location || (workshop ? 'Check Sessions' : 'TBA'))}</div>
                             </div>
                           </div>
                         );
@@ -1002,7 +846,7 @@ export default function App() {
                       <div className="space-y-3 mt-6">
                         {matchingUsers.map((u, i) => (
                           <button key={`user-choice-${i}`} onClick={() => processUser(u)} className="w-full p-5 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:bg-white/80 active:scale-[0.98] transition-all shadow-sm">
-                            <span className="font-bold text-gray-800">{(getSafeField(u, 'Name (First)') + ' ' + getSafeField(u, 'Name (Last)')).trim() || getSafeField(u, 'Email')}</span><ChevronRight size={20} className="text-[#E8BA21]" />
+                            <span className="font-bold text-gray-800">{(u['Name (First)'] + ' ' + u['Name (Last)']).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" />
                           </button>
                         ))}
                       </div>
@@ -1015,7 +859,7 @@ export default function App() {
                         <p className="text-lg text-gray-600 font-medium leading-relaxed max-w-lg mb-8">{CONFERENCE_INFO.tagline}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div>
-                          <a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 hover:bg-white hover:shadow-md transition-all group"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a>
+                          <a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 hover:bg-white hover:shadow-md transition-all group"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400 truncate w-32 sm:w-auto">{CONFERENCE_INFO.address}</span></div></a>
                         </div>
                       </div>
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 text-left">
@@ -1056,10 +900,7 @@ export default function App() {
 
             {activeTab === 'workshops' && (
               <div className="animate-in fade-in duration-500 space-y-10">
-                <div className="text-left">
-                  <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Workshops</h2>
-                  <p className="text-sm text-gray-500 font-medium mt-1 text-left">Browse sessions and see their scheduled times.</p>
-                </div>
+                <div className="text-left"><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Workshops</h2><p className="text-sm text-gray-500 font-medium mt-1 text-left">Browse sessions and see their scheduled times.</p></div>
                 <div className="relative group"><Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#4563AD] transition-colors" size={20} /><input type="text" placeholder="Search topics or speakers..." className="w-full pl-14 p-5 rounded-[2rem] border border-gray-100 bg-white outline-none focus:ring-4 focus:ring-[#4563AD]/5 focus:border-[#4563AD]/20 font-medium transition-all shadow-sm" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="grid grid-cols-1 gap-4 text-left">
                   {filteredWorkshops.map((w) => (
@@ -1069,21 +910,14 @@ export default function App() {
                           <h3 className="font-extrabold text-xl text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{w.title}</h3>
                           <p className="text-[#ED4E23] text-sm font-bold uppercase tracking-wider">{w.speaker}</p>
                         </div>
-                        {w.category && <p className="text-[#4563AD] text-[9px] font-extrabold uppercase tracking-widest bg-[#4563AD]/5 inline-block px-2.5 py-0.5 rounded-full border border-[#4563AD]/10 whitespace-nowrap ml-2">{w.category}</p>}
+                        {w.category && <p className="text-[#4563AD] text-[9px] font-extrabold uppercase tracking-widest bg-[#4563AD]/5 inline-block px-2 py-0.5 rounded-full border border-[#4563AD]/10 whitespace-nowrap ml-2">{w.category}</p>}
                       </div>
-
                       {w.sessions && w.sessions.length > 0 ? (
                         <div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 gap-2">
                           {w.sessions.map((s, i) => (
                             <div key={i} className="flex items-center gap-3">
-                              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-500 tracking-tighter">
-                                <Clock size={11} className="text-[#E8BA21]" />
-                                <span>{s.day} {s.time}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-400 tracking-tighter truncate">
-                                <MapPin size={11} className="text-[#4563AD]" />
-                                <span className="truncate">{s.room}</span>
-                              </div>
+                              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-500 tracking-tighter"><Clock size={11} className="text-[#E8BA21]" /><span>{s.day} {s.time}</span></div>
+                              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-400 tracking-tighter truncate"><MapPin size={11} className="text-[#4563AD]" /><span className="truncate">{s.room}</span></div>
                             </div>
                           ))}
                         </div>
@@ -1092,7 +926,7 @@ export default function App() {
                       )}
                     </div>
                   ))}
-                  {filteredWorkshops.length === 0 && <div className="text-center py-20 text-gray-400 font-medium italic">No workshops found matching that search.</div>}
+                  {filteredWorkshops.length === 0 && <div className="text-center py-20 text-gray-400 font-medium italic">No workshops found.</div>}
                 </div>
               </div>
             )}
