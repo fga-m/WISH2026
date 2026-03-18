@@ -3,13 +3,15 @@ import {
   CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, 
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
   Sparkles, Calendar, Building2, DoorOpen, 
-  Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2
+  Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
+  Maximize2
 } from 'lucide-react';
 
 // --- CONFIGURATION ---
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
   workshopCatalog: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnhme1HIsh7TxAro8Md1Xwp3fFdxizrFCNBbSLYYlRlWQGf2ndODy3XYte8XDwjyGOWVaBL_tKk4A2/pub?output=csv",
+  updatesFeed: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRf69vgjPStu-Y718QfFL7JiD404Y3s9raQ4cFegH4ocqotbE1XE77IXffBQ6iMffx4uUW77g5du9ma/pub?output=csv" 
 };
 
 const CONFERENCE_INFO = {
@@ -27,24 +29,12 @@ const MASTER_SCHEDULE = [
 ];
 
 const VENUE_MAP = [
-  { 
-    zone: "FGA Melbourne", 
-    address: "38 Lexton Road, Box Hill North", 
-    mapUrl: CONFERENCE_INFO.googleMapsUrl, 
-    icon: Building2, 
-    rooms: [
-      {name: "Lobby", note: "Level 2"}, 
-      {name: "Sanctuary", note: "Level 2"}, 
-      {name: "Meeting Room", note: "Level 1"}, 
-      {name: "Rooftop", note: "Top Level"} 
-    ] 
-  },
+  { zone: "FGA Melbourne", address: "38 Lexton Road, Box Hill North", mapUrl: CONFERENCE_INFO.googleMapsUrl, icon: Building2, rooms: [{name: "Lobby", note: "Level 2"}, {name: "Sanctuary", note: "Level 2"}, {name: "Meeting Room", note: "Level 1"}, {name: "Rooftop", note: "Top Level"}] },
   { zone: "4/41 Lexton Road", address: "4/41 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=4+41+Lexton+Road+Box+Hill+North+VIC+3129", icon: Building2, rooms: [{name: "Main Space", note: "Upstairs"}] },
   { zone: "7/41 Lexton Road", address: "7/41 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=7+41+Lexton+Road+Box+Hill+North+VIC+3129", icon: DoorOpen, rooms: [{name: "Dance Studio 1", note: "Ground"}, {name: "Dance Studio 2", note: "Level 1"}] },
   { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=61+Lexton+Road+Box+Hill+North+VIC+3129", icon: MapPinIcon, rooms: [{name: "Main Area", note: "Ground"}, {name: "Classroom", note: "Level 1"}] }
 ];
 
-// Helper Functions
 function normalizeString(str) {
   if (!str) return '';
   return str.toString().toLowerCase().trim()
@@ -99,12 +89,50 @@ function parseSessionString(str) {
 function getDirectDriveLink(url) {
   if (!url) return '';
   const urlStr = String(url);
-  if (!urlStr.includes('drive.google.com')) return urlStr;
-  const idMatch = urlStr.match(/\/d\/([a-zA-Z0-9_-]+)/) || urlStr.match(/id=([a-zA-Z0-9_-]+)/);
-  return idMatch ? `https://lh3.googleusercontent.com/d/${idMatch[1]}` : urlStr;
+  const firstUrl = urlStr.split(',')[0].trim();
+  if (!firstUrl.includes('drive.google.com')) return firstUrl;
+  const idMatch = firstUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || firstUrl.match(/id=([a-zA-Z0-9_-]+)/);
+  return idMatch ? `https://lh3.googleusercontent.com/d/${idMatch[1]}` : firstUrl;
 }
 
-// UI Components
+// Updated Helper to format Google Form timestamp string into "Date, HH:mm"
+function formatTimestamp(ts) {
+  if (!ts || ts === 'Recent') return 'Recent';
+  
+  try {
+    const date = new Date(ts);
+    if (!isNaN(date.getTime())) {
+      // Formats as "17 Apr, 5:30 PM"
+      const datePart = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+      const timePart = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      return `${datePart}, ${timePart}`;
+    }
+
+    // Manual fallback for "DD/MM/YYYY HH:mm:ss" if Date() fails due to locale
+    const parts = ts.split(' ');
+    if (parts.length >= 2) {
+      const dateStr = parts[0]; // "DD/MM/YYYY"
+      const timePart = parts[1]; // "HH:mm:ss"
+      const timeSubParts = timePart.split(':');
+      
+      // Clean up the date string slightly for display
+      const dateClean = dateStr.split('/').slice(0, 2).join('/'); // Just "DD/MM"
+      
+      if (timeSubParts.length >= 2) {
+        let hours = parseInt(timeSubParts[0], 10);
+        const minutes = timeSubParts[1];
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${dateClean}, ${hours}:${minutes} ${ampm}`;
+      }
+    }
+    return ts;
+  } catch (e) {
+    return ts;
+  }
+}
+
 function NavItem({ icon: Icon, label, isActive, onClick }) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${isActive ? 'text-[#4563AD]' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -191,6 +219,7 @@ export default function App() {
   const [conferenceUser, setConferenceUser] = useState(null);
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [email, setEmail] = useState('');
   const [isSyncing, setIsSyncing] = useState(true);
   const [isLoadingUser, setIsLoadingUser] = useState(false);
@@ -199,35 +228,44 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDay, setSelectedDay] = useState('Friday');
   const [workshops, setWorkshops] = useState([]);
-  
-  const [updates] = useState([
-    { 
-      id: 'welcome', 
-      title: 'Welcome to WISH 2026', 
-      body: 'We are so excited to have you with us! Check the updates tab regularly for live announcements during the conference.',
-      author: 'WISH Team',
-      createdAt: { toMillis: () => Date.now() }
-    }
-  ]);
+  const [updates, setUpdates] = useState([]);
 
   useEffect(() => {
-    const loadWorkshops = async () => {
+    const fetchData = async () => {
       try {
         const timestamp = new Date().getTime();
-        const response = await fetch(`${LINKS.workshopCatalog}&t=${timestamp}`, { cache: "no-store" });
-        const csvText = await response.text();
-        const data = parseCSV(csvText);
-        setWorkshops(data.map(row => ({
+        
+        const catalogRes = await fetch(`${LINKS.workshopCatalog}&t=${timestamp}`, { cache: "no-store" });
+        const catalogCsv = await catalogRes.text();
+        const catalogData = parseCSV(catalogCsv);
+        setWorkshops(catalogData.map(row => ({
           ...row, 
           sessions: parseSessionString(String(row.sessions || ''))
         })).sort((a,b) => String(a.title || '').localeCompare(String(b.title || ''))));
+
+        const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
+        const updatesCsv = await updatesRes.text();
+        const rawUpdates = parseCSV(updatesCsv);
+        
+        const mappedUpdates = rawUpdates.map(u => ({
+          title: u.title || u.updatetitle || u.heading || '',
+          body: u.body || u.message || u.updatemessage || '',
+          author: u.author || u.postedby || u.name || 'Team',
+          image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
+          timestamp: u.timestamp || 'Recent'
+        }));
+
+        setUpdates(mappedUpdates.reverse());
+
       } catch (err) { 
-        console.error("Catalog load error", err); 
+        console.error("Data load error", err); 
       }
       setIsSyncing(false);
     };
 
-    loadWorkshops();
+    fetchData();
+    const interval = setInterval(fetchData, 60000); 
+    return () => clearInterval(interval);
   }, []);
 
   const workshopLookupMap = useMemo(() => {
@@ -289,6 +327,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedImage(null)}
+        >
+          <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors">
+            <X size={32} />
+          </button>
+          <img 
+            src={selectedImage} 
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+            alt="Full size update" 
+          />
+        </div>
+      )}
+
       <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 h-20 shrink-0">
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center gap-2">
@@ -314,16 +368,36 @@ export default function App() {
             {activeTab === 'updates' && (
               <div className="space-y-8 animate-in fade-in">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Updates</h2></div>
-                <div className="space-y-6">
-                  {updates.map(post => (
-                    <div key={post.id} className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden text-left animate-in slide-in-from-bottom-4">
-                      <div className="p-6 md:p-8">
-                        <h3 className="text-xl font-extrabold mb-3 text-gray-900">{String(post.title || '')}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap font-medium">{String(post.body || '')}</p>
-                        <div className="mt-6 pt-4 border-t border-gray-50 flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          <Clock size={12}/> {new Date(post.createdAt.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} • Posted by {String(post.author || 'Team')}
+                <div className="space-y-4">
+                  {updates.length === 0 && (
+                    <div className="text-center py-20 text-gray-400 italic">No updates yet. Check back during the conference!</div>
+                  )}
+                  {updates.map((post, idx) => (
+                    <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden text-left animate-in slide-in-from-bottom-4 flex items-start gap-4 p-5">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-extrabold mb-1 text-gray-900 leading-tight">{String(post.title || '')}</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{String(post.body || '')}</p>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                          <Clock size={12}/> {formatTimestamp(post.timestamp)} • {String(post.author || 'Team')}
                         </div>
                       </div>
+                      
+                      {post.image && (
+                        <div 
+                          className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-zoom-in relative group"
+                          onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}
+                        >
+                          <img 
+                            src={getDirectDriveLink(String(post.image))} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                            alt="Thumbnail" 
+                            onError={(e) => e.target.style.display = 'none'} 
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                            <Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
