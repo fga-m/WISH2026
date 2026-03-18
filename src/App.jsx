@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, 
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
@@ -7,12 +7,33 @@ import {
   Maximize2
 } from 'lucide-react';
 
+// Firebase Imports for Session Persistence
+import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+
 // --- CONFIGURATION ---
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
   workshopCatalog: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnhme1HIsh7TxAro8Md1Xwp3fFdxizrFCNBbSLYYlRlWQGf2ndODy3XYte8XDwjyGOWVaBL_tKk4A2/pub?output=csv",
   updatesFeed: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRf69vgjPStu-Y718QfFL7JiD404Y3s9raQ4cFegH4ocqotbE1XE77IXffBQ6iMffx4uUW77g5du9ma/pub?output=csv" 
 };
+
+// --- FIREBASE INITIALIZATION ---
+// Updated with your web app configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD20J-zbKbo7F3AxzwDXdIhUbvUs0W8V5w",
+  authDomain: "wish-2026.firebaseapp.com",
+  projectId: "wish-2026",
+  storageBucket: "wish-2026.firebasestorage.app",
+  messagingSenderId: "949007992492",
+  appId: "1:949007992492:web:cbb8e0c771228cffba8109"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = 'wish-2026-v1'; // Used for Firestore path structure
 
 const CONFERENCE_INFO = {
   dates: "Friday 17th — Sunday 19th April 2026",
@@ -95,29 +116,21 @@ function getDirectDriveLink(url) {
   return idMatch ? `https://lh3.googleusercontent.com/d/${idMatch[1]}` : firstUrl;
 }
 
-// Updated Helper to format Google Form timestamp string into "Date, HH:mm"
 function formatTimestamp(ts) {
   if (!ts || ts === 'Recent') return 'Recent';
-  
   try {
     const date = new Date(ts);
     if (!isNaN(date.getTime())) {
-      // Formats as "17 Apr, 5:30 PM"
       const datePart = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
       const timePart = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
       return `${datePart}, ${timePart}`;
     }
-
-    // Manual fallback for "DD/MM/YYYY HH:mm:ss" if Date() fails due to locale
     const parts = ts.split(' ');
     if (parts.length >= 2) {
-      const dateStr = parts[0]; // "DD/MM/YYYY"
-      const timePart = parts[1]; // "HH:mm:ss"
+      const dateStr = parts[0];
+      const timePart = parts[1];
       const timeSubParts = timePart.split(':');
-      
-      // Clean up the date string slightly for display
-      const dateClean = dateStr.split('/').slice(0, 2).join('/'); // Just "DD/MM"
-      
+      const dateClean = dateStr.split('/').slice(0, 2).join('/');
       if (timeSubParts.length >= 2) {
         let hours = parseInt(timeSubParts[0], 10);
         const minutes = timeSubParts[1];
@@ -216,7 +229,8 @@ function WorkshopDetailView({ workshop, onBack }) {
 }
 
 export default function App() {
-  const [conferenceUser, setConferenceUser] = useState(null);
+  const [user, setUser] = useState(null); 
+  const [conferenceUser, setConferenceUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -230,11 +244,100 @@ export default function App() {
   const [workshops, setWorkshops] = useState([]);
   const [updates, setUpdates] = useState([]);
 
+  // Finalize setup from sheet data
+  const completeUserSetup = useCallback(async (u, emailStr) => {
+    const fKey = Object.keys(u).find(k => k.includes('first'));
+    const lKey = Object.keys(u).find(k => k.includes('last'));
+    
+    setConferenceUser({ 
+      name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], 
+      email: emailStr, 
+      workshops: u 
+    });
+    setMatchingUsers([]);
+    setActiveTab('my-wish');
+
+    // Save session to device-linked Firestore (Remember Me)
+    if (auth.currentUser) {
+      try {
+        const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
+        await setDoc(sessionDoc, { 
+          email: emailStr, 
+          updatedAt: new Date().toISOString() 
+        });
+      } catch (err) {
+        console.error("Session persistence failed", err);
+      }
+    }
+  }, []);
+
+  // Registry check
+  const performLoginCheck = useCallback(async (targetEmail) => {
+    if (!targetEmail) return;
+    setIsLoadingUser(true);
+    setError('');
+    try {
+      const timestamp = new Date().getTime();
+      const res = await fetch(`${LINKS.itineraries}&t=${timestamp}`, { cache: "no-store" });
+      const csv = await res.text();
+      const rawData = parseCSV(csv);
+      const emailStr = targetEmail.trim().toLowerCase();
+      const users = rawData.filter(row => Object.values(row).some(val => String(val).toLowerCase().trim() === emailStr));
+      
+      if (users.length === 1) {
+        completeUserSetup(users[0], emailStr);
+      } else if (users.length > 1) {
+        setMatchingUsers(users);
+      } else {
+        setError(`"${emailStr}" not found in registration list.`);
+        if (auth.currentUser) {
+          const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
+          await deleteDoc(sessionDoc).catch(() => {});
+        }
+      }
+    } catch (e) { 
+      setError("Error connecting to registry."); 
+    } finally { 
+      setIsLoadingUser(false); 
+    }
+  }, [completeUserSetup]);
+
+  // Handle Session on Load (Rule 3)
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // Authenticate anonymously first to access device-specific folders
+        await signInAnonymously(auth);
+      } catch (err) {
+        console.error("Auth init failed", err);
+      }
+    };
+
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setUser(fbUser);
+      if (fbUser) {
+        try {
+          const sessionDoc = doc(db, 'artifacts', appId, 'users', fbUser.uid, 'session', 'current');
+          const snap = await getDoc(sessionDoc);
+          if (snap.exists() && snap.data().email) {
+            performLoginCheck(snap.data().email);
+          }
+        } catch (err) {
+          console.error("Session fetch failed", err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [performLoginCheck]);
+
+  // Main Feed Loading
   useEffect(() => {
     const fetchData = async () => {
       try {
         const timestamp = new Date().getTime();
-        
         const catalogRes = await fetch(`${LINKS.workshopCatalog}&t=${timestamp}`, { cache: "no-store" });
         const catalogCsv = await catalogRes.text();
         const catalogData = parseCSV(catalogCsv);
@@ -246,7 +349,6 @@ export default function App() {
         const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
         const updatesCsv = await updatesRes.text();
         const rawUpdates = parseCSV(updatesCsv);
-        
         const mappedUpdates = rawUpdates.map(u => ({
           title: u.title || u.updatetitle || u.heading || '',
           body: u.body || u.message || u.updatemessage || '',
@@ -254,9 +356,7 @@ export default function App() {
           image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
           timestamp: u.timestamp || 'Recent'
         }));
-
         setUpdates(mappedUpdates.reverse());
-
       } catch (err) { 
         console.error("Data load error", err); 
       }
@@ -268,6 +368,14 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleLogout = async () => {
+    if (auth.currentUser) {
+      const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
+      await deleteDoc(sessionDoc).catch(() => {});
+    }
+    setConferenceUser(null);
+  };
+
   const workshopLookupMap = useMemo(() => {
     const map = new Map();
     workshops.forEach(w => {
@@ -276,41 +384,6 @@ export default function App() {
     });
     return map;
   }, [workshops]);
-
-  const processUser = (u, emailStr) => {
-    const fKey = Object.keys(u).find(k => k.includes('first'));
-    const lKey = Object.keys(u).find(k => k.includes('last'));
-    setConferenceUser({ 
-      name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], 
-      email: emailStr, 
-      workshops: u 
-    });
-    setMatchingUsers([]);
-    setActiveTab('my-wish');
-  };
-
-  const handleLogin = async (e) => {
-    if (e) e.preventDefault();
-    if (!email.trim()) return;
-    setIsLoadingUser(true);
-    setError('');
-    try {
-      const timestamp = new Date().getTime();
-      const res = await fetch(`${LINKS.itineraries}&t=${timestamp}`, { cache: "no-store" });
-      const csv = await res.text();
-      const rawData = parseCSV(csv);
-      const emailStr = email.trim().toLowerCase();
-      const users = rawData.filter(row => Object.values(row).some(val => String(val).toLowerCase().trim() === emailStr));
-      if (users.length === 1) {
-        processUser(users[0], emailStr);
-      } else if (users.length > 1) {
-        setMatchingUsers(users);
-      } else {
-        setError(`"${emailStr}" not found in registration list.`);
-      }
-    } catch (e) { setError("Network error checking registry."); }
-    finally { setIsLoadingUser(false); }
-  };
 
   const filteredWorkshops = useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -328,18 +401,9 @@ export default function App() {
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
       {selectedImage && (
-        <div 
-          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setSelectedImage(null)}
-        >
-          <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors">
-            <X size={32} />
-          </button>
-          <img 
-            src={selectedImage} 
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
-            alt="Full size update" 
-          />
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
+          <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
+          <img src={selectedImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Full size update" />
         </div>
       )}
 
@@ -369,9 +433,7 @@ export default function App() {
               <div className="space-y-8 animate-in fade-in">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Updates</h2></div>
                 <div className="space-y-4">
-                  {updates.length === 0 && (
-                    <div className="text-center py-20 text-gray-400 italic">No updates yet. Check back during the conference!</div>
-                  )}
+                  {updates.length === 0 && <div className="text-center py-20 text-gray-400 italic">No updates yet. Check back during the conference!</div>}
                   {updates.map((post, idx) => (
                     <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden text-left animate-in slide-in-from-bottom-4 flex items-start gap-4 p-5">
                       <div className="flex-1 min-w-0">
@@ -381,21 +443,10 @@ export default function App() {
                           <Clock size={12}/> {formatTimestamp(post.timestamp)} • {String(post.author || 'Team')}
                         </div>
                       </div>
-                      
                       {post.image && (
-                        <div 
-                          className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-zoom-in relative group"
-                          onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}
-                        >
-                          <img 
-                            src={getDirectDriveLink(String(post.image))} 
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                            alt="Thumbnail" 
-                            onError={(e) => e.target.style.display = 'none'} 
-                          />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
-                            <Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                          </div>
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-zoom-in relative group" onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}>
+                          <img src={getDirectDriveLink(String(post.image))} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Thumbnail" onError={(e) => e.target.style.display = 'none'} />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors"><Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" /></div>
                         </div>
                       )}
                     </div>
@@ -470,7 +521,7 @@ export default function App() {
                 <div className="space-y-8 text-left animate-in fade-in">
                   <div className="flex justify-between items-end">
                     <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div>
-                    <button onClick={() => setConferenceUser(null)} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button>
+                    <button onClick={handleLogout} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button>
                   </div>
                   <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                   <div className="space-y-6">
@@ -510,7 +561,7 @@ export default function App() {
                       <h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2>
                       <div className="space-y-3 mt-6">
                         {matchingUsers.map((u, i) => (
-                          <button key={`user-choice-${i}`} onClick={() => processUser(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:border-[#ED4E23] shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || '')).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>
+                          <button key={`user-choice-${i}`} onClick={() => completeUserSetup(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:border-[#ED4E23] shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || '')).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>
                         ))}
                       </div>
                     </div>
@@ -528,7 +579,7 @@ export default function App() {
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5">
                         <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2>
                         <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
-                        <form onSubmit={handleLogin} className="space-y-4">
+                        <form onSubmit={(e) => { e.preventDefault(); performLoginCheck(email); }} className="space-y-4">
                           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />
                           {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}
                           <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
