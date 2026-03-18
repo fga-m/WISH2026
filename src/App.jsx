@@ -19,9 +19,12 @@ const LINKS = {
 
 // --- FIREBASE INITIALIZATION ---
 const getFirebaseConfig = () => {
+  // Check if the environment provides a pre-parsed config (Secure Injection)
   if (typeof __firebase_config !== 'undefined' && __firebase_config) {
     return JSON.parse(__firebase_config);
   }
+  
+  // Updated with your specific project credentials
   return {
     apiKey: "AIzaSyBcboFERyxzFGAvGR6W9V9Wh6v309xawoM",
     authDomain: "wish-2026-app.firebaseapp.com",
@@ -36,9 +39,9 @@ const app = !getApps().length ? initializeApp(getFirebaseConfig()) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Use sanitizedAppId to ensure 5 segments in Firestore paths
+// appId must be sanitized to avoid path segment errors in Firestore
 const rawAppId = typeof __app_id !== 'undefined' ? __app_id : 'wish-2026-v1';
-const sanitizedAppId = rawAppId.replace(/[^a-z0-9]/gi, '_');
+const sanitizedAppId = rawAppId.replace(/[^a-z0-9]/gi, '_'); 
 
 const ADMIN_EMAILS = [
   'admin@fga.org.au', 
