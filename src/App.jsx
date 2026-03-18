@@ -202,7 +202,7 @@ function WorkshopDetailView({ workshop, onBack }) {
       <div className="w-full max-w-2xl mx-auto px-6">
         <div className="py-4 border-b border-[#E8BA21]/20 flex items-center gap-2 sticky top-0 bg-[#FCF5EB]/90 backdrop-blur-sm z-10">
           <button onClick={onBack} className="p-2 -ml-2 text-[#4563AD] hover:bg-[#4563AD]/10 rounded-full transition-colors"><ChevronLeft size={24} /></button>
-          <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-wider">Session Details</span>
+          <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-wider">Workshop Details</span>
         </div>
         <div className="py-8">
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-2 font-serif">{workshop.title}</h1>
@@ -350,7 +350,10 @@ export default function App() {
       <div className="min-h-screen bg-[#FCF5EB] flex items-center justify-center p-10 text-center">
         <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
           <Loader2 className="animate-spin text-[#ED4E23]" size={48} />
-          <h2 className="text-xl font-extrabold text-gray-900 font-serif mb-1">Syncing Schedule</h2>
+          <div>
+            <h2 className="text-xl font-extrabold text-gray-900 font-serif mb-1">Syncing Schedule</h2>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Checking for latest updates...</p>
+          </div>
         </div>
       </div>
     );
@@ -361,8 +364,20 @@ export default function App() {
       <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 shadow-sm h-20">
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center">
-            <img src={LOGO_URL} className="h-10 md:h-12 w-auto object-contain" alt="WISH Logo" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
-            <div className="hidden items-center gap-2"><div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-serif font-black text-2xl">W</div><span className="font-serif font-black text-2xl tracking-tighter text-gray-900 uppercase">WISH<span className="text-[#4563AD]">26</span></span></div>
+            <img 
+              src={LOGO_URL} 
+              className="h-10 md:h-12 w-auto object-contain" 
+              alt="WISH Logo" 
+              style={{ aspectRatio: '3/1' }} 
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+            <div className="hidden items-center gap-2">
+              <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-serif font-black text-2xl">W</div>
+              <span className="font-serif font-black text-2xl tracking-tighter text-gray-900 uppercase">WISH<span className="text-[#4563AD]">26</span></span>
+            </div>
           </div>
           {currentUser && <div className="flex items-center gap-3"><span className="hidden sm:block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{currentUser.name}</span><div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{currentUser.name.charAt(0)}</div></div>}
         </div>
