@@ -20,7 +20,6 @@ const LINKS = {
 };
 
 // --- FIREBASE INITIALIZATION ---
-// Updated with your web app configuration
 const firebaseConfig = {
   apiKey: "AIzaSyD20J-zbKbo7F3AxzwDXdIhUbvUs0W8V5w",
   authDomain: "wish-2026.firebaseapp.com",
@@ -33,7 +32,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = 'wish-2026-v1'; // Used for Firestore path structure
+const appId = 'wish-2026-v1';
 
 const CONFERENCE_INFO = {
   dates: "Friday 17th — Sunday 19th April 2026",
@@ -229,13 +228,17 @@ function WorkshopDetailView({ workshop, onBack }) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null); 
+  const [fbUser, setFbUser] = useState(null); 
   const [conferenceUser, setConferenceUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [email, setEmail] = useState('');
-  const [isSyncing, setIsSyncing] = useState(true);
+  
+  // States to manage combined loading
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [isSessionRestored, setIsSessionRestored] = useState(false);
+  
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [error, setError] = useState('');
   const [matchingUsers, setMatchingUsers] = useState([]);
@@ -266,14 +269,17 @@ export default function App() {
           updatedAt: new Date().toISOString() 
         });
       } catch (err) {
-        console.error("Session persistence failed", err);
+        console.error("Session save failed", err);
       }
     }
   }, []);
 
-  // Registry check
+  // Registry check logic
   const performLoginCheck = useCallback(async (targetEmail) => {
-    if (!targetEmail) return;
+    if (!targetEmail) {
+      setIsSessionRestored(true);
+      return;
+    };
     setIsLoadingUser(true);
     setError('');
     try {
@@ -285,7 +291,7 @@ export default function App() {
       const users = rawData.filter(row => Object.values(row).some(val => String(val).toLowerCase().trim() === emailStr));
       
       if (users.length === 1) {
-        completeUserSetup(users[0], emailStr);
+        await completeUserSetup(users[0], emailStr);
       } else if (users.length > 1) {
         setMatchingUsers(users);
       } else {
@@ -299,41 +305,47 @@ export default function App() {
       setError("Error connecting to registry."); 
     } finally { 
       setIsLoadingUser(false); 
+      setIsSessionRestored(true); // Signal session check is over
     }
   }, [completeUserSetup]);
 
-  // Handle Session on Load (Rule 3)
+  // Auth & Session Retrieval Effect (Rule 3)
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Authenticate anonymously first to access device-specific folders
+        // Sign in anonymously immediately to check session doc
         await signInAnonymously(auth);
       } catch (err) {
-        console.error("Auth init failed", err);
+        console.error("Initial auth failed", err);
+        setIsSessionRestored(true); // Proceed anyway if auth fails
       }
     };
-
     initAuth();
 
-    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-      setUser(fbUser);
-      if (fbUser) {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setFbUser(user);
+      if (user) {
         try {
-          const sessionDoc = doc(db, 'artifacts', appId, 'users', fbUser.uid, 'session', 'current');
+          const sessionDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current');
           const snap = await getDoc(sessionDoc);
           if (snap.exists() && snap.data().email) {
             performLoginCheck(snap.data().email);
+          } else {
+            setIsSessionRestored(true);
           }
         } catch (err) {
-          console.error("Session fetch failed", err);
+          console.error("Session restore error", err);
+          setIsSessionRestored(true);
         }
+      } else {
+        // No user at all, stop waiting
+        setIsSessionRestored(true);
       }
     });
-
     return () => unsubscribe();
   }, [performLoginCheck]);
 
-  // Main Feed Loading
+  // Main Feed Data Loading
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -358,9 +370,9 @@ export default function App() {
         }));
         setUpdates(mappedUpdates.reverse());
       } catch (err) { 
-        console.error("Data load error", err); 
+        console.error("Feed load error", err); 
       }
-      setIsSyncing(false);
+      setIsDataLoaded(true); // Signal initial data is ready
     };
 
     fetchData();
@@ -391,10 +403,13 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
+  // App is ready only when data is loaded AND we've finished checking for a session
+  const isSyncing = !isDataLoaded || !isSessionRestored;
+
   if (isSyncing) return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center p-10 text-center">
       <Loader2 className="animate-spin text-[#ED4E23] mb-4" size={48} />
-      <h2 className="text-xl font-extrabold text-gray-900 font-serif">Loading Conference...</h2>
+      <h2 className="text-xl font-extrabold text-gray-900 font-serif">Restoring Workspace...</h2>
     </div>
   );
 
