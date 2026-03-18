@@ -8,10 +8,14 @@ import {
 
 // --- CONFIGURATION ---
 const LINKS = {
+  // Registration data from Google Sheets
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
+  
+  // Workshop catalog data from Google Sheets
   workshopCatalog: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnhme1HIsh7TxAro8Md1Xwp3fFdxizrFCNBbSLYYlRlWQGf2ndODy3XYte8XDwjyGOWVaBL_tKk4A2/pub?output=csv",
 };
 
+// Expects logo.png to be in the /public folder of your project
 const LOGO_URL = "/logo.png";
 
 const CONFERENCE_INFO = {
@@ -49,29 +53,87 @@ const VENUE_MAP = [
   { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=61+Lexton+Road+Box+Hill+North+VIC+3129", icon: <MapPinIcon size={20} />, description: "Satellite Space", rooms: [{ name: "Main Area", note: "Ground" }, { name: "Classroom", note: "Level 1" }] }
 ];
 
-// --- OPTIMIZED HELPERS ---
+// --- ADVANCED HELPERS ---
 
 function normalizeString(str) {
   if (!str) return '';
-  return str.toString().toLowerCase().replace(/['"“”‘’]/g, '').replace(/[—–-]/g, '-').trim();
+  return str.toString().toLowerCase()
+    .replace(/['"“”]/g, '')
+    .replace(/[—–-]/g, '-')
+    .trim();
 }
 
+/**
+ * Robust CSV Parser that handles newlines inside quoted cells correctly.
+ */
 function parseCSV(text) {
-  const lines = text.split(/\r?\n/);
-  if (lines.length < 2) return [];
-  
-  // Advanced Header Cleaning: Lowecase and remove any non-alphanumeric chars
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''));
-  
-  return lines.slice(1)
-    .filter(l => l.trim().length > 0)
-    .map((line) => {
-      const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/^["']|["']$/g, ''));
-      const row = {};
-      headers.forEach((h, i) => { if (h) row[h] = values[i] || ''; });
-      return row;
-    })
-    .filter(row => Object.values(row).some(v => v.trim() !== '')); 
+  const result = [];
+  let row = [];
+  let cell = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (inQuotes) {
+      if (char === '"' && nextChar === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') {
+        inQuotes = false;
+      } else {
+        cell += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        row.push(cell.trim());
+        cell = '';
+      } else if (char === '\n' || char === '\r') {
+        if (cell || row.length > 0) {
+          row.push(cell.trim());
+          result.push(row);
+        }
+        row = [];
+        cell = '';
+        if (char === '\r' && nextChar === '\n') i++;
+      } else {
+        cell += char;
+      }
+    }
+  }
+
+  if (cell || row.length > 0) {
+    row.push(cell.trim());
+    result.push(row);
+  }
+
+  if (result.length < 2) return [];
+
+  const headers = result[0].map(h => 
+    h.toLowerCase().replace(/[^a-z0-9]/g, '')
+  );
+
+  return result.slice(1).map(rowData => {
+    const obj = {};
+    headers.forEach((header, index) => {
+      obj[header] = rowData[index] || '';
+    });
+    return obj;
+  }).filter(obj => Object.values(obj).some(v => v !== ''));
+}
+
+function formatTimeToStandard(timeStr) {
+  if (!timeStr) return '';
+  let clean = timeStr.toUpperCase().replace(/\s/g, '');
+  if (!clean.includes(':') && (clean.includes('AM') || clean.includes('PM'))) {
+    clean = clean.replace('AM', ':00 AM').replace('PM', ':00 PM');
+  }
+  if (clean.includes('AM') && !clean.includes(' AM')) clean = clean.replace('AM', ' AM');
+  if (clean.includes('PM') && !clean.includes(' PM')) clean = clean.replace('PM', ' PM');
+  return clean.trim();
 }
 
 function parseSessionString(str) {
@@ -80,10 +142,17 @@ function parseSessionString(str) {
     const segments = part.split('@').map(s => s.trim());
     if (segments.length < 2) return null;
     const [dateTime, room] = segments;
-    const day = dateTime.substring(0, 3);
-    const time = dateTime.substring(4).trim();
-    return { day, time, room };
+    const day = dateTime.substring(0, 3).trim();
+    const rawTime = dateTime.substring(4).trim();
+    return { day, time: formatTimeToStandard(rawTime), room };
   }).filter(s => s !== null);
+}
+
+function getDirectDriveLink(url) {
+  if (!url) return '';
+  if (!url.includes('drive.google.com')) return url;
+  const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+  return idMatch ? `https://lh3.googleusercontent.com/d/${idMatch[1]}` : url;
 }
 
 // --- UI COMPONENTS ---
@@ -97,14 +166,14 @@ function NavItem({ icon, label, isActive, onClick }) {
   );
 }
 
-function ExpandableText({ text, maxLength = 120, className = "text-gray-600 text-sm leading-relaxed font-medium" }) {
+function ExpandableText({ text, maxLength = 250, className = "text-gray-600 text-sm leading-relaxed font-medium" }) {
   const [isExpanded, setIsExpanded] = useState(false);
   if (!text || text.length === 0) return null;
   if (text.length <= maxLength) return <p className={`${className} whitespace-pre-wrap`}>{text}</p>;
   return (
     <div className={className}>
       <span className="whitespace-pre-wrap">{isExpanded ? text : `${text.substring(0, maxLength).trim()}...`}</span>
-      <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className="ml-2 text-[#ED4E23] font-bold hover:underline inline-flex items-center">
+      <button onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} className="ml-1 text-[#ED4E23] font-bold hover:underline inline-flex items-center">
         {isExpanded ? 'See less' : 'See more'}
       </button>
     </div>
@@ -114,10 +183,10 @@ function ExpandableText({ text, maxLength = 120, className = "text-gray-600 text
 const DaySelector = React.memo(({ selectedDay, onDayChange }) => {
   const days = ['Friday', 'Saturday', 'Sunday'];
   return (
-    <div className="sticky top-0 bg-[#FCF5EB]/95 backdrop-blur-sm z-10 py-4 border-b border-[#E8BA21]/20 mb-6">
-      <div className="flex bg-white/50 p-1 rounded-2xl border border-gray-100 shadow-sm max-w-md mx-auto">
+    <div className="sticky top-0 bg-[#FCF5EB]/95 backdrop-blur-sm z-10 py-4 border-b border-[#E8BA21]/20 mb-6 text-center">
+      <div className="flex bg-white/50 p-1 rounded-2xl border border-gray-100 shadow-sm max-w-md mx-auto inline-flex">
         {days.map(day => (
-          <button key={day} onClick={() => onDayChange(day)} className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-widest ${selectedDay === day ? 'bg-[#4563AD] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>
+          <button key={day} onClick={() => onDayChange(day)} className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all uppercase tracking-widest ${selectedDay === day ? 'bg-[#4563AD] text-white shadow-md' : 'text-gray-400 hover:text-gray-600'}`}>
             {day}
           </button>
         ))}
@@ -150,17 +219,23 @@ function WorkshopDetailView({ workshop, onBack }) {
           )}
           <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm my-8">
             <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">About this session</h3>
-            {workshop.description ? <ExpandableText text={workshop.description} maxLength={3000} /> : <p className="italic text-gray-400">Description coming soon...</p>}
+            {workshop.description ? <ExpandableText text={workshop.description} maxLength={250} /> : <p className="italic text-gray-400">Description coming soon...</p>}
           </div>
           {workshop.biography && workshop.biography !== "N/A" && (
             <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-[#4563AD]/10 shadow-sm relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-[#E8BA21]/10 rounded-bl-full -z-0"></div>
               <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10">About the Speaker</h3>
               <div className="flex items-start gap-4 relative z-10">
-                <div className="w-16 h-16 rounded-full bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center font-bold text-[#ED4E23] text-2xl uppercase shadow-sm">{(workshop.speaker || 'T').charAt(0)}</div>
+                <div className="w-16 h-16 rounded-full bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center overflow-hidden shadow-sm shrink-0">
+                  {workshop.photo ? (
+                    <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="font-bold text-[#ED4E23] text-2xl uppercase">{(workshop.speaker || 'T').charAt(0)}</span>
+                  )}
+                </div>
                 <div className="flex-1">
                   <h4 className="font-extrabold text-gray-900 text-base leading-tight">{workshop.speaker}</h4>
-                  <ExpandableText text={workshop.biography} maxLength={500} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
+                  <ExpandableText text={workshop.biography} maxLength={180} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
                 </div>
               </div>
             </div>
@@ -186,7 +261,6 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState('Friday');
   const [workshops, setWorkshops] = useState([]);
 
-  // Use a reliable timestamp to force refresh
   const currentTimestamp = useMemo(() => new Date().getTime(), []);
 
   useEffect(() => {
@@ -201,18 +275,19 @@ export default function App() {
         const data = parseCSV(csvText);
         
         const parsed = data.map(row => ({
-          // Keys are now sanitized alphanumeric lowercase (id, title, speaker, etc)
           id: row['id'] || '',
           title: row['title'] || '',
           speaker: row['speaker'] || '',
           category: row['category'] || '',
           biography: row['biography'] || '',
           description: row['description'] || '',
+          photo: row['photo'] || '',
           sessions: parseSessionString(row['sessions'] || '')
         }));
-        setWorkshops(parsed);
+        const sorted = parsed.sort((a, b) => a.title.localeCompare(b.title));
+        setWorkshops(sorted);
       } catch (err) {
-        console.error("Failed to load workshop catalog", err);
+        console.error("Catalog load error", err);
       } finally {
         setIsSyncing(false);
       }
@@ -235,16 +310,10 @@ export default function App() {
     setIsLoadingUser(true);
     setError('');
     try {
-      const response = await fetch(`${LINKS.itineraries}&t=${new Date().getTime()}`, {
-        cache: "no-store"
-      });
-      if (!response.ok) throw new Error("Registry offline");
+      const response = await fetch(`${LINKS.itineraries}&t=${new Date().getTime()}`, { cache: "no-store" });
       const csvText = await response.text();
       const data = parseCSV(csvText);
-      const users = data.filter(row => {
-        const rowEmail = (row['email'] || '').toString().trim().toLowerCase();
-        return rowEmail === email.trim().toLowerCase();
-      });
+      const users = data.filter(row => (row['email'] || '').toString().trim().toLowerCase() === email.trim().toLowerCase());
 
       if (users.length === 1) processUser(users[0]);
       else if (users.length > 1) setMatchingUsers(users);
@@ -256,19 +325,16 @@ export default function App() {
   const processUser = (row) => {
     const userWorkshops = {};
     const identityKeys = ['email', 'namefirst', 'namelast', 'name'];
-    
     Object.keys(row).forEach(key => {
       const val = (row[key] || '').toString().trim();
       if (!identityKeys.includes(key) && val) {
-        const technicalId = Object.keys(SLOT_HEADER_MAP).find(id => 
-          SLOT_HEADER_MAP[id].some(alias => alias.replace(/[^a-z0-9]/g, '') === key)
+        const techId = Object.keys(SLOT_HEADER_MAP).find(id => 
+          SLOT_HEADER_MAP[id].some(a => a.replace(/[^a-z0-9]/g, '') === key)
         );
-        userWorkshops[technicalId || key] = val;
+        userWorkshops[techId || key] = val;
       }
     });
-
-    const fullName = `${row['namefirst'] || ''} ${row['namelast'] || ''}`.trim();
-    setCurrentUser({ name: fullName || row['email']?.split('@')[0], workshops: userWorkshops });
+    setCurrentUser({ name: `${row['namefirst'] || ''} ${row['namelast'] || ''}`.trim() || row['email']?.split('@')[0], workshops: userWorkshops });
     setMatchingUsers([]);
     setSelectedDay('Saturday');
   };
@@ -276,8 +342,7 @@ export default function App() {
   const filteredWorkshops = useMemo(() => {
     const term = searchTerm.toLowerCase();
     const baseList = workshops.filter(w => w.id !== 'lunch-special' && normalizeString(w.title) !== 'lunch meal time');
-    if (!term) return baseList;
-    return baseList.filter(w => w.title.toLowerCase().includes(term) || w.speaker.toLowerCase().includes(term));
+    return term ? baseList.filter(w => w.title.toLowerCase().includes(term) || w.speaker.toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
   if (isSyncing) {
@@ -285,7 +350,7 @@ export default function App() {
       <div className="min-h-screen bg-[#FCF5EB] flex items-center justify-center p-10 text-center">
         <div className="flex flex-col items-center gap-6 animate-in fade-in duration-500">
           <Loader2 className="animate-spin text-[#ED4E23]" size={48} />
-          <div><h2 className="text-xl font-extrabold text-gray-900 font-serif mb-1">Syncing Schedule</h2><p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Checking for latest updates...</p></div>
+          <h2 className="text-xl font-extrabold text-gray-900 font-serif mb-1">Syncing Schedule</h2>
         </div>
       </div>
     );
@@ -293,10 +358,10 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
-      <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 shadow-sm shrink-0 h-20">
+      <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 shadow-sm h-20">
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center">
-            <img src={LOGO_URL} className="h-10 md:h-12 w-auto object-contain" alt="WISH Logo" style={{ aspectRatio: '3/1' }} onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
+            <img src={LOGO_URL} className="h-10 md:h-12 w-auto object-contain" alt="WISH Logo" onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}/>
             <div className="hidden items-center gap-2"><div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-serif font-black text-2xl">W</div><span className="font-serif font-black text-2xl tracking-tighter text-gray-900 uppercase">WISH<span className="text-[#4563AD]">26</span></span></div>
           </div>
           {currentUser && <div className="flex items-center gap-3"><span className="hidden sm:block text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">{currentUser.name}</span><div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{currentUser.name.charAt(0)}</div></div>}
@@ -326,7 +391,8 @@ export default function App() {
                         return (
                           <div key={`personal-ev-${event.id}`} className="flex gap-4 items-start">
                             <div className="w-16 shrink-0 pt-4 text-right font-bold text-gray-400 text-sm">{event.time}</div>
-                            <div className={`flex-1 p-5 rounded-3xl border transition-all ${isWorkshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white border-gray-100 shadow-sm'} relative overflow-hidden`} onClick={() => isWorkshop ? setSelectedWorkshopId(workshop.id) : null}>
+                            <div 
+                              className={`flex-1 p-5 rounded-3xl border transition-all ${isWorkshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white border-gray-100 shadow-sm'} relative overflow-hidden`} onClick={() => isWorkshop ? setSelectedWorkshopId(workshop.id) : null}>
                               {(isMain || isWorkshop) && <div className={`absolute top-0 left-0 w-1.5 h-full ${isMain ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}
                               <h4 className={`font-bold text-gray-900 leading-snug text-lg ${isPending ? 'italic text-gray-400' : ''}`}>{workshop ? workshop.title : (isPending ? 'Choice Pending' : event.title)}</h4>
                               {isWorkshop && <p className="text-sm text-[#ED4E23] mt-1 font-bold">with {workshop.speaker}</p>}
@@ -350,7 +416,7 @@ export default function App() {
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 text-left"><h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2><p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
                         <form onSubmit={handleLogin} className="space-y-4"><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />
                           {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {error}</div>}
-                          <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg shadow-[#ED4E23]/30 hover:bg-[#ED4E23]/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg">{isLoadingUser ? "Signing In..." : <>Access My Schedule <ChevronRight size={20}/></>}</button>
+                          <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg shadow-[#ED4E23]/30 hover:bg-[#ED4E23]/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-lg">{isLoadingUser ? "Checking Registry..." : <>Access My Schedule <ChevronRight size={20}/></>}</button>
                         </form>
                       </div>
                     </div>
@@ -381,10 +447,12 @@ export default function App() {
                   {filteredWorkshops.map((w) => (
                     <div key={`w-list-${w.id}`} onClick={() => setSelectedWorkshopId(w.id)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 hover:shadow-md cursor-pointer active:scale-[0.99] transition-all group flex flex-col gap-1">
                       <div className="flex justify-between items-start"><div className="flex-1"><h3 className="font-extrabold text-xl text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{w.title}</h3><p className="text-[#ED4E23] text-sm font-bold uppercase tracking-wider">{w.speaker}</p></div>{w.category && <p className="text-[#4563AD] text-[9px] font-extrabold uppercase tracking-widest bg-[#4563AD]/5 inline-block px-2.5 py-0.5 rounded-full border border-[#4563AD]/10 whitespace-nowrap ml-2">{w.category}</p>}</div>
-                      {w.sessions && w.sessions.length > 0 && (<div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 gap-2">{w.sessions.map((s, i) => (<div key={i} className="flex items-center gap-3"><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-500 tracking-tighter"><Clock size={11} className="text-[#E8BA21]" /><span>{s.day} {s.time}</span></div><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-400 tracking-tighter truncate"><MapPin size={11} className="text-[#4563AD]" /><span className="truncate">{s.room}</span></div></div>))}</div>)}
+                      {w.sessions && w.sessions.length > 0 && (<div className="mt-4 pt-4 border-t border-gray-50 grid grid-cols-1 gap-2">{w.sessions.map((s, i) => (
+                          <div key={i} className="flex items-center gap-3"><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-500 tracking-tighter"><Clock size={11} className="text-[#E8BA21]" /><span>{s.day} {s.time}</span></div><div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-gray-400 tracking-tighter truncate"><MapPin size={11} className="text-[#4563AD]" /><span className="truncate">{s.room}</span></div></div>
+                        ))}</div>)}
                     </div>
                   ))}
-                  {filteredWorkshops.length === 0 && <div className="text-center py-20 text-gray-400 font-medium italic">No workshops found matching that search.</div>}
+                  {filteredWorkshops.length === 0 && <div className="text-center py-20 text-gray-400 font-medium italic">No workshops found.</div>}
                 </div>
               </div>
             )}
