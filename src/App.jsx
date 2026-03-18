@@ -409,7 +409,7 @@ export default function App() {
   if (isSyncing) return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center p-10 text-center">
       <Loader2 className="animate-spin text-[#ED4E23] mb-4" size={48} />
-      <h2 className="text-xl font-extrabold text-gray-900 font-serif">Restoring Workspace...</h2>
+      <h2 className="text-xl font-extrabold text-gray-900 font-serif">Loading Your WISH Experience...</h2>
     </div>
   );
 
@@ -608,7 +608,7 @@ export default function App() {
 
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left">
-                <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Locations</h2></div>
+                <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
                 <div className="space-y-8">
                   {VENUE_MAP.map((location, idx) => {
                     const Icon = location.icon;
@@ -641,10 +641,10 @@ export default function App() {
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FCF5EB]/95 backdrop-blur-xl border-t border-[#E8BA21]/20 z-50 h-20">
         <div className="max-w-2xl mx-auto h-20 flex justify-around items-center px-4">
           <NavItem icon={Bell} label="Updates" isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={User} label="WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); }} />
           <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); }} />
           <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={MapIcon} label="Map" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); }} />
         </div>
       </nav>
     </div>
