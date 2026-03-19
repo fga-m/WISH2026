@@ -310,10 +310,11 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Sign in anonymously immediately to check session doc
         await signInAnonymously(auth);
       } catch (err) {
-        console.error("Auth init failed", err);
-        setIsSessionRestored(true);
+        console.error("Initial auth failed", err);
+        setIsSessionRestored(true); // Proceed anyway if auth fails
       }
     };
     initAuth();
@@ -331,7 +332,10 @@ export default function App() {
           console.error("Session restore error", err);
           setIsSessionRestored(true);
         }
-      } else { setIsSessionRestored(true); }
+      } else {
+        // No user at all, stop waiting
+        setIsSessionRestored(true);
+      }
     });
     return () => unsubscribe();
   }, [performLoginCheck]);
@@ -360,8 +364,10 @@ export default function App() {
           timestamp: u.timestamp || 'Recent'
         }));
         setUpdates(mappedUpdates.reverse());
-      } catch (err) { console.error("Feed load error", err); }
-      setIsDataLoaded(true);
+      } catch (err) { 
+        console.error("Feed load error", err); 
+      }
+      setIsDataLoaded(true); // Signal initial data is ready
     };
 
     fetchData();
@@ -392,6 +398,7 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
+  // App is ready only when data is loaded AND we've finished checking for a session
   const isSyncing = !isDataLoaded || !isSessionRestored;
 
   if (isSyncing) return (
@@ -457,9 +464,14 @@ export default function App() {
                         </div>
                       </div>
                       {post.image && (
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-zoom-in relative group" onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}>
+                        <div 
+                          className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" 
+                          onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}
+                        >
                           <img src={getDirectDriveLink(String(post.image))} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Thumbnail" onError={(e) => e.target.style.display = 'none'} />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors"><Maximize2 size={16} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" /></div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
+                            <Maximize2 size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -505,6 +517,7 @@ export default function App() {
                         </div>
                         <ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" />
                       </div>
+                      
                       {w.sessions && w.sessions.length > 0 && (
                         <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">
                           {w.sessions.map((session, sIdx) => (
