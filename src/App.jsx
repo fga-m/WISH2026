@@ -16,7 +16,8 @@ import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
   workshopCatalog: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnhme1HIsh7TxAro8Md1Xwp3fFdxizrFCNBbSLYYlRlWQGf2ndODy3XYte8XDwjyGOWVaBL_tKk4A2/pub?output=csv",
-  updatesFeed: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRf69vgjPStu-Y718QfFL7JiD404Y3s9raQ4cFegH4ocqotbE1XE77IXffBQ6iMffx4uUW77g5du9ma/pub?output=csv" 
+  updatesFeed: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRf69vgjPStu-Y718QfFL7JiD404Y3s9raQ4cFegH4ocqotbE1XE77IXffBQ6iMffx4uUW77g5du9ma/pub?output=csv",
+  logo: "https://drive.google.com/uc?export=download&id=1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP" 
 };
 
 // --- FIREBASE INITIALIZATION ---
@@ -140,9 +141,7 @@ function formatTimestamp(ts) {
       }
     }
     return ts;
-  } catch (e) {
-    return ts;
-  }
+  } catch (e) { return ts; }
 }
 
 function NavItem({ icon: Icon, label, isActive, onClick }) {
@@ -238,6 +237,7 @@ export default function App() {
   // States to manage combined loading
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSessionRestored, setIsSessionRestored] = useState(false);
+  const [logoLoaded, setLogoLoaded] = useState(false);
   
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [error, setError] = useState('');
@@ -268,9 +268,7 @@ export default function App() {
           email: emailStr, 
           updatedAt: new Date().toISOString() 
         });
-      } catch (err) {
-        console.error("Session save failed", err);
-      }
+      } catch (err) { console.error("Session save failed", err); }
     }
   }, []);
 
@@ -301,11 +299,10 @@ export default function App() {
           await deleteDoc(sessionDoc).catch(() => {});
         }
       }
-    } catch (e) { 
-      setError("Error connecting to registry."); 
-    } finally { 
+    } catch (e) { setError("Error connecting to registry."); } 
+    finally { 
       setIsLoadingUser(false); 
-      setIsSessionRestored(true); // Signal session check is over
+      setIsSessionRestored(true); 
     }
   }, [completeUserSetup]);
 
@@ -313,11 +310,10 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Sign in anonymously immediately to check session doc
         await signInAnonymously(auth);
       } catch (err) {
-        console.error("Initial auth failed", err);
-        setIsSessionRestored(true); // Proceed anyway if auth fails
+        console.error("Auth init failed", err);
+        setIsSessionRestored(true);
       }
     };
     initAuth();
@@ -330,17 +326,12 @@ export default function App() {
           const snap = await getDoc(sessionDoc);
           if (snap.exists() && snap.data().email) {
             performLoginCheck(snap.data().email);
-          } else {
-            setIsSessionRestored(true);
-          }
+          } else { setIsSessionRestored(true); }
         } catch (err) {
           console.error("Session restore error", err);
           setIsSessionRestored(true);
         }
-      } else {
-        // No user at all, stop waiting
-        setIsSessionRestored(true);
-      }
+      } else { setIsSessionRestored(true); }
     });
     return () => unsubscribe();
   }, [performLoginCheck]);
@@ -369,10 +360,8 @@ export default function App() {
           timestamp: u.timestamp || 'Recent'
         }));
         setUpdates(mappedUpdates.reverse());
-      } catch (err) { 
-        console.error("Feed load error", err); 
-      }
-      setIsDataLoaded(true); // Signal initial data is ready
+      } catch (err) { console.error("Feed load error", err); }
+      setIsDataLoaded(true);
     };
 
     fetchData();
@@ -403,7 +392,6 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
-  // App is ready only when data is loaded AND we've finished checking for a session
   const isSyncing = !isDataLoaded || !isSessionRestored;
 
   if (isSyncing) return (
@@ -425,8 +413,18 @@ export default function App() {
       <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 h-20 shrink-0">
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>
-            <span className="font-serif font-black text-2xl tracking-tighter">WISH<span className="text-[#4563AD]">26</span></span>
+            {LINKS.logo ? (
+              <img 
+                src={getDirectDriveLink(LINKS.logo)} 
+                alt="Logo" 
+                className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} 
+                onLoad={() => setLogoLoaded(true)}
+                onError={() => { setLogoLoaded(false); }}
+              />
+            ) : null}
+            {!logoLoaded && (
+              <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>
+            )}
           </div>
           {conferenceUser && (
             <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">
@@ -507,7 +505,6 @@ export default function App() {
                         </div>
                         <ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" />
                       </div>
-                      
                       {w.sessions && w.sessions.length > 0 && (
                         <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">
                           {w.sessions.map((session, sIdx) => (
