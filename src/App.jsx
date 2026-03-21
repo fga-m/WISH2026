@@ -4,7 +4,7 @@ import {
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
   Sparkles, Calendar, Building2, DoorOpen, 
   Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
-  Maximize2
+  Maximize2, Eye
 } from 'lucide-react';
 
 // Firebase Imports for Session Persistence
@@ -232,6 +232,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedSlot, setSelectedSlot] = useState(null); // { title, dayAbbr, time, matches }
   const [email, setEmail] = useState('');
   
   // States to manage combined loading
@@ -310,11 +311,10 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Sign in anonymously immediately to check session doc
         await signInAnonymously(auth);
       } catch (err) {
-        console.error("Initial auth failed", err);
-        setIsSessionRestored(true); // Proceed anyway if auth fails
+        console.error("Auth init failed", err);
+        setIsSessionRestored(true);
       }
     };
     initAuth();
@@ -333,7 +333,6 @@ export default function App() {
           setIsSessionRestored(true);
         }
       } else {
-        // No user at all, stop waiting
         setIsSessionRestored(true);
       }
     });
@@ -367,7 +366,7 @@ export default function App() {
       } catch (err) { 
         console.error("Feed load error", err); 
       }
-      setIsDataLoaded(true); // Signal initial data is ready
+      setIsDataLoaded(true);
     };
 
     fetchData();
@@ -398,7 +397,16 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
-  // App is ready only when data is loaded AND we've finished checking for a session
+  // Handler for clicking a session slot in Master Schedule
+  const handleSlotClick = (ev) => {
+    if (ev.type !== 'workshop_slot') return;
+    const dayAbbr = selectedDay.substring(0, 3);
+    const matches = workshops.filter(w => 
+      w.sessions?.some(s => s.day === dayAbbr && s.time === ev.time)
+    );
+    setSelectedSlot({ title: ev.title, dayAbbr, time: ev.time, matches });
+  };
+
   const isSyncing = !isDataLoaded || !isSessionRestored;
 
   if (isSyncing) return (
@@ -410,10 +418,53 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
+      {/* Photo Lightbox */}
       {selectedImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
           <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
           <img src={selectedImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Full size update" />
+        </div>
+      )}
+
+      {/* Slot Workshops Modal Overlay */}
+      {selectedSlot && (
+        <div className="fixed inset-0 z-[100] bg-[#FCF5EB]/95 backdrop-blur-md flex flex-col animate-in slide-in-from-bottom-8 duration-300">
+          <div className="w-full max-w-2xl mx-auto flex flex-col h-full px-6">
+            <div className="py-6 flex items-center justify-between border-b border-[#E8BA21]/20">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-[#ED4E23] uppercase tracking-widest">{selectedSlot.dayAbbr} • {selectedSlot.time}</span>
+                <h2 className="text-2xl font-extrabold text-gray-900 font-serif">{selectedSlot.title}</h2>
+              </div>
+              <button onClick={() => setSelectedSlot(null)} className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto py-8 space-y-4 pb-12">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Choose a workshop to view details:</p>
+              {selectedSlot.matches.length === 0 && (
+                <div className="text-center py-20 text-gray-400 italic">No workshops found for this time slot.</div>
+              )}
+              {selectedSlot.matches.map(w => (
+                <div 
+                  key={`slot-item-${w.id}`} 
+                  onClick={() => {
+                    setSelectedWorkshopId(w.id);
+                    setSelectedSlot(null);
+                  }}
+                  className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group"
+                >
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h3 className="font-extrabold text-lg text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{String(w.title || '')}</h3>
+                    <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{String(w.speaker || '')}</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400">
+                      <MapPin size={10} className="text-[#E8BA21]/50" />
+                      {w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}
+                    </div>
+                  </div>
+                  <ChevronRight size={20} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -488,11 +539,20 @@ export default function App() {
                   {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => (
                     <div key={ev.id} className="flex gap-4 text-left">
                       <div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div>
-                      <div className="flex-1 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden">
+                      <div 
+                        onClick={() => handleSlotClick(ev)}
+                        className={`flex-1 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden transition-all ${ev.type === 'workshop_slot' ? 'cursor-pointer hover:border-[#E8BA21]/40 hover:shadow-md' : ''}`}
+                      >
                         {(ev.type === 'main' && !ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4563AD]" />}
                         {(ev.type === 'workshop_slot' || ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E8BA21]" />}
-                        <h4 className="font-bold text-lg text-gray-900">{String(ev.title || '')}</h4>
-                        <div className="text-xs text-gray-400 mt-1 uppercase font-bold flex items-center gap-1"><MapPin size={12}/> {String(ev.location || 'Multiple Rooms')}</div>
+                        <div className="flex items-center justify-between gap-4">
+                          <h4 className="font-bold text-lg text-gray-900">{String(ev.title || '')}</h4>
+                          {ev.type === 'workshop_slot' && <ChevronRight size={16} className="text-[#E8BA21] opacity-50" />}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1 uppercase font-bold flex items-center gap-1">
+                          <MapPin size={12}/> 
+                          {ev.type === 'workshop_slot' ? 'Select a Workshop' : (ev.location || 'Multiple Rooms')}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -650,11 +710,11 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FCF5EB]/95 backdrop-blur-xl border-t border-[#E8BA21]/20 z-50 h-20">
         <div className="max-w-2xl mx-auto h-20 flex justify-around items-center px-4">
-          <NavItem icon={Bell} label="Updates" isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); }} />
-          <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); }} />
+          <NavItem icon={Bell} label="Updates" isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
         </div>
       </nav>
     </div>
