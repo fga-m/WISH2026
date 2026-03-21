@@ -10,7 +10,7 @@ import {
 // Firebase Imports for Session Persistence
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
 const LINKS = {
@@ -144,10 +144,17 @@ function formatTimestamp(ts) {
   } catch (e) { return ts; }
 }
 
-function NavItem({ icon: Icon, label, isActive, onClick }) {
+function NavItem({ icon: Icon, label, isActive, onClick, badge = 0 }) {
   return (
     <button onClick={onClick} className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-all ${isActive ? 'text-[#4563AD]' : 'text-gray-400 hover:text-gray-600'}`}>
-      <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-[#4563AD]/10' : ''}`}><Icon size={22} /></div>
+      <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-[#4563AD]/10' : ''}`}>
+        <Icon size={22} />
+        {badge > 0 && (
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-[#FCF5EB] animate-in zoom-in">
+            {badge > 9 ? '9+' : badge}
+          </span>
+        )}
+      </div>
       <span className="text-[10px] font-extrabold uppercase tracking-tight text-center leading-tight">{label}</span>
     </button>
   );
@@ -232,13 +239,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedSlot, setSelectedSlot] = useState(null); // { title, dayAbbr, time, matches }
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [email, setEmail] = useState('');
   
   // States to manage combined loading
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSessionRestored, setIsSessionRestored] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
+  const [lastSeenUpdates, setLastSeenUpdates] = useState(0);
   
   const [isLoadingUser, setIsLoadingUser] = useState(false);
   const [error, setError] = useState('');
@@ -268,7 +276,7 @@ export default function App() {
         await setDoc(sessionDoc, { 
           email: emailStr, 
           updatedAt: new Date().toISOString() 
-        });
+        }, { merge: true });
       } catch (err) { console.error("Session save failed", err); }
     }
   }, []);
@@ -325,8 +333,14 @@ export default function App() {
         try {
           const sessionDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current');
           const snap = await getDoc(sessionDoc);
-          if (snap.exists() && snap.data().email) {
-            performLoginCheck(snap.data().email);
+          if (snap.exists()) {
+            const data = snap.data();
+            if (data.lastSeenUpdates) setLastSeenUpdates(data.lastSeenUpdates);
+            if (data.email) {
+              performLoginCheck(data.email);
+            } else {
+              setIsSessionRestored(true);
+            }
           } else { setIsSessionRestored(true); }
         } catch (err) {
           console.error("Session restore error", err);
@@ -355,13 +369,18 @@ export default function App() {
         const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
         const updatesCsv = await updatesRes.text();
         const rawUpdates = parseCSV(updatesCsv);
-        const mappedUpdates = rawUpdates.map(u => ({
-          title: u.title || u.updatetitle || u.heading || '',
-          body: u.body || u.message || u.updatemessage || '',
-          author: u.author || u.postedby || u.name || 'Team',
-          image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
-          timestamp: u.timestamp || 'Recent'
-        }));
+        const mappedUpdates = rawUpdates.map(u => {
+          const rawTs = u.timestamp || '';
+          const parsedDate = new Date(rawTs);
+          return {
+            title: u.title || u.updatetitle || u.heading || '',
+            body: u.body || u.message || u.updatemessage || '',
+            author: u.author || u.postedby || u.name || 'Team',
+            image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
+            timestamp: rawTs,
+            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 0
+          };
+        });
         setUpdates(mappedUpdates.reverse());
       } catch (err) { 
         console.error("Feed load error", err); 
@@ -373,6 +392,23 @@ export default function App() {
     const interval = setInterval(fetchData, 60000); 
     return () => clearInterval(interval);
   }, []);
+
+  // Update "Last Seen" when viewing Updates tab
+  useEffect(() => {
+    if (activeTab === 'updates' && auth.currentUser && updates.length > 0) {
+      const latestTs = Math.max(...updates.map(u => u.ms));
+      if (latestTs > lastSeenUpdates) {
+        setLastSeenUpdates(latestTs);
+        const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
+        setDoc(sessionDoc, { lastSeenUpdates: latestTs }, { merge: true }).catch(() => {});
+      }
+    }
+  }, [activeTab, updates, lastSeenUpdates]);
+
+  const unreadCount = useMemo(() => {
+    if (activeTab === 'updates') return 0;
+    return updates.filter(u => u.ms > lastSeenUpdates).length;
+  }, [updates, lastSeenUpdates, activeTab]);
 
   const handleLogout = async () => {
     if (auth.currentUser) {
@@ -501,12 +537,12 @@ export default function App() {
         ) : (
           <>
             {activeTab === 'updates' && (
-              <div className="space-y-8 animate-in fade-in">
+              <div className="space-y-8 animate-in fade-in text-left">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Updates</h2></div>
                 <div className="space-y-4">
                   {updates.length === 0 && <div className="text-center py-20 text-gray-400 italic">No updates yet. Check back during the conference!</div>}
                   {updates.map((post, idx) => (
-                    <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden text-left animate-in slide-in-from-bottom-4 flex items-start gap-4 p-5">
+                    <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden flex items-start gap-4 p-5 animate-in slide-in-from-bottom-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-extrabold mb-1 text-gray-900 leading-tight">{String(post.title || '')}</h3>
                         <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{String(post.body || '')}</p>
@@ -639,7 +675,7 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col space-y-12 text-left animate-in fade-in">
+                <div className="flex flex-col space-y-8 text-left animate-in fade-in">
                   {matchingUsers.length > 0 ? (
                     <div className="pt-4">
                       <button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button>
@@ -652,8 +688,7 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      <div className="py-8">
-                        <div className="inline-flex items-center gap-2 bg-[#4563AD]/10 text-[#4563AD] px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6"><Sparkles size={14} /> WISH CONFERENCE '26</div>
+                      <div className="pt-4 pb-2">
                         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
                         <p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p>
                         <div className="grid grid-cols-1 gap-4">
@@ -710,7 +745,7 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FCF5EB]/95 backdrop-blur-xl border-t border-[#E8BA21]/20 z-50 h-20">
         <div className="max-w-2xl mx-auto h-20 flex justify-around items-center px-4">
-          <NavItem icon={Bell} label="Updates" isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={Bell} label="Updates" badge={unreadCount} isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
