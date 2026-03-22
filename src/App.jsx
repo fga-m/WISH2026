@@ -192,6 +192,12 @@ const DaySelector = React.memo(({ selectedDay, onDayChange }) => {
 
 function WorkshopDetailView({ workshop, onBack }) {
   if (!workshop) return null;
+
+  const getMapsUrlForRoom = (roomName) => {
+    const venue = VENUE_MAP.find(v => v.rooms.some(r => r.name.toLowerCase() === roomName.toLowerCase()));
+    return venue ? venue.mapUrl : CONFERENCE_INFO.googleMapsUrl;
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#FCF5EB] animate-in slide-in-from-right-8 duration-300 pb-24 text-left">
       <div className="w-full max-w-2xl mx-auto px-6">
@@ -203,7 +209,40 @@ function WorkshopDetailView({ workshop, onBack }) {
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight mb-2 font-serif">{String(workshop.title || '')}</h1>
           <p className="text-lg md:text-xl font-bold text-[#ED4E23] mb-8">by {String(workshop.speaker || '')}</p>
           
-          <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm my-8 text-left">
+          {workshop.sessions && workshop.sessions.length > 0 && (
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mb-8">
+              <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
+                <Calendar size={14} /> Schedule & Location
+              </h3>
+              <div className="space-y-4">
+                {workshop.sessions.map((session, sIdx) => (
+                  <div key={`detail-session-${sIdx}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 last:pb-0 border-b border-gray-50 last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#FCF5EB] flex items-center justify-center text-[#ED4E23] shrink-0">
+                        <Clock size={18} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-extrabold text-gray-900 uppercase">{session.day} Session</p>
+                        <p className="text-xs font-bold text-gray-400">{session.time}</p>
+                      </div>
+                    </div>
+                    <a 
+                      href={getMapsUrlForRoom(session.room)} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-2.5 rounded-xl border border-gray-100 transition-all group"
+                    >
+                      <MapPin size={14} className="text-[#E8BA21] group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-bold">{session.room}</span>
+                      <ExternalLink size={10} className="opacity-30" />
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8 text-left">
             <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">About this session</h3>
             {workshop.description ? <ExpandableText text={workshop.description} maxLength={3000} /> : <p className="italic text-gray-400">Description coming soon...</p>}
           </div>
@@ -433,7 +472,6 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
-  // Handler for clicking a session slot in Master Schedule
   const handleSlotClick = (ev) => {
     if (ev.type !== 'workshop_slot') return;
     const dayAbbr = selectedDay.substring(0, 3);
@@ -691,12 +729,9 @@ export default function App() {
                       <div className="pt-4 pb-2">
                         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
                         <p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p>
-                        <div className="grid grid-cols-1 gap-4">
-                          <div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div>
-                          <a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a>
-                        </div>
                       </div>
-                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5">
+
+                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4">
                         <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2>
                         <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
                         <form onSubmit={(e) => { e.preventDefault(); performLoginCheck(email); }} className="space-y-4">
@@ -704,6 +739,11 @@ export default function App() {
                           {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}
                           <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
                         </form>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-4">
+                        <div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div>
+                        <a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a>
                       </div>
                     </>
                   )}
