@@ -51,9 +51,11 @@ const MASTER_SCHEDULE = [
 
 const VENUE_MAP = [
   { zone: "FGA Melbourne", address: "38 Lexton Road, Box Hill North", mapUrl: CONFERENCE_INFO.googleMapsUrl, icon: Building2, rooms: [{name: "Lobby", note: "Level 2"}, {name: "Sanctuary", note: "Level 2"}, {name: "Meeting Room", note: "Level 1"}, {name: "Rooftop", note: "Top Level"}] },
-  { zone: "4/41 Lexton Road", address: "4/41 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=4+41+Lexton+Road+Box+Hill+North+VIC+3129", icon: Building2, rooms: [{name: "Main Space", note: "Upstairs"}] },
-  { zone: "7/41 Lexton Road", address: "7/41 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=7+41+Lexton+Road+Box+Hill+North+VIC+3129", icon: DoorOpen, rooms: [{name: "Dance Studio 1", note: "Ground"}, {name: "Dance Studio 2", note: "Level 1"}] },
-  { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://www.google.com/maps/search/?api=1&query=61+Lexton+Road+Box+Hill+North+VIC+3129", icon: MapPinIcon, rooms: [{name: "Main Area", note: "Ground"}, {name: "Classroom", note: "Level 1"}] }
+  // Updated mapUrl for 4/41 Lexton Road
+  { zone: "4/41 Lexton Road", address: "4/41 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/xbrbPsctC5nw8GRk9", icon: Building2, rooms: [{name: "Main Space", note: "Upstairs"}] },
+  { zone: "7/41 Lexton Road", address: "7/41 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/wdFztK1KFQr62LsZ6", icon: DoorOpen, rooms: [{name: "Dance Studio 1", note: "Ground"}, {name: "Dance Studio 2", note: "Level 1"}] },
+  // Updated mapUrl for 61 Lexton Road
+  { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/fsJV5yCWrXM2XKzS7", icon: MapPinIcon, rooms: [{name: "Main Area", note: "Ground"}, {name: "Classroom", note: "Level 1"}] }
 ];
 
 function normalizeString(str) {
@@ -194,7 +196,21 @@ function WorkshopDetailView({ workshop, onBack }) {
   if (!workshop) return null;
 
   const getMapsUrlForRoom = (roomName) => {
-    const venue = VENUE_MAP.find(v => v.rooms.some(r => r.name.toLowerCase() === roomName.toLowerCase()));
+    if (!roomName) return CONFERENCE_INFO.googleMapsUrl;
+    const cleanInput = String(roomName).toLowerCase().trim();
+    
+    let venue = VENUE_MAP.find(v => 
+      v.rooms.some(r => r.name.toLowerCase().trim() === cleanInput)
+    );
+    
+    if (!venue) {
+      venue = VENUE_MAP.find(v => v.zone.toLowerCase().trim() === cleanInput);
+    }
+
+    if (!venue) {
+      venue = VENUE_MAP.find(v => cleanInput.includes(v.zone.toLowerCase().trim()));
+    }
+    
     return venue ? venue.mapUrl : CONFERENCE_INFO.googleMapsUrl;
   };
 
@@ -216,7 +232,7 @@ function WorkshopDetailView({ workshop, onBack }) {
               </h3>
               <div className="space-y-4">
                 {workshop.sessions.map((session, sIdx) => (
-                  <div key={`detail-session-${sIdx}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 last:pb-0 border-b border-gray-50 last:border-0">
+                  <div key={`detail-session-${sIdx}`} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 last:pb-0 border-b border-gray-50 last:border-0">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[#FCF5EB] flex items-center justify-center text-[#ED4E23] shrink-0">
                         <Clock size={18} />
@@ -230,7 +246,7 @@ function WorkshopDetailView({ workshop, onBack }) {
                       href={getMapsUrlForRoom(session.room)} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-2.5 rounded-xl border border-gray-100 transition-all group"
+                      className="inline-flex items-center gap-2 bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-2.5 rounded-xl border border-gray-100 transition-all group shrink-0"
                     >
                       <MapPin size={14} className="text-[#E8BA21] group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold">{session.room}</span>
@@ -281,7 +297,6 @@ export default function App() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [email, setEmail] = useState('');
   
-  // States to manage combined loading
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSessionRestored, setIsSessionRestored] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
@@ -295,7 +310,6 @@ export default function App() {
   const [workshops, setWorkshops] = useState([]);
   const [updates, setUpdates] = useState([]);
 
-  // Finalize setup from sheet data
   const completeUserSetup = useCallback(async (u, emailStr) => {
     const fKey = Object.keys(u).find(k => k.includes('first'));
     const lKey = Object.keys(u).find(k => k.includes('last'));
@@ -308,7 +322,6 @@ export default function App() {
     setMatchingUsers([]);
     setActiveTab('my-wish');
 
-    // Save session to device-linked Firestore (Remember Me)
     if (auth.currentUser) {
       try {
         const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
@@ -320,7 +333,6 @@ export default function App() {
     }
   }, []);
 
-  // Registry check logic
   const performLoginCheck = useCallback(async (targetEmail) => {
     if (!targetEmail) {
       setIsSessionRestored(true);
@@ -354,7 +366,6 @@ export default function App() {
     }
   }, [completeUserSetup]);
 
-  // Auth & Session Retrieval Effect (Rule 3)
   useEffect(() => {
     const initAuth = async () => {
       try {
@@ -392,7 +403,6 @@ export default function App() {
     return () => unsubscribe();
   }, [performLoginCheck]);
 
-  // Main Feed Data Loading
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -421,9 +431,7 @@ export default function App() {
           };
         });
         setUpdates(mappedUpdates.reverse());
-      } catch (err) { 
-        console.error("Feed load error", err); 
-      }
+      } catch (err) { console.error("Feed load error", err); }
       setIsDataLoaded(true);
     };
 
@@ -432,7 +440,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Update "Last Seen" when viewing Updates tab
   useEffect(() => {
     if (activeTab === 'updates' && auth.currentUser && updates.length > 0) {
       const latestTs = Math.max(...updates.map(u => u.ms));
@@ -511,28 +518,14 @@ export default function App() {
               </div>
               <button onClick={() => setSelectedSlot(null)} className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
             </div>
-            
             <div className="flex-1 overflow-y-auto py-8 space-y-4 pb-12">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Choose a workshop to view details:</p>
-              {selectedSlot.matches.length === 0 && (
-                <div className="text-center py-20 text-gray-400 italic">No workshops found for this time slot.</div>
-              )}
+              {selectedSlot.matches.length === 0 && <div className="text-center py-20 text-gray-400 italic">No workshops found for this time slot.</div>}
               {selectedSlot.matches.map(w => (
-                <div 
-                  key={`slot-item-${w.id}`} 
-                  onClick={() => {
-                    setSelectedWorkshopId(w.id);
-                    setSelectedSlot(null);
-                  }}
-                  className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group"
-                >
+                <div key={`slot-item-${w.id}`} onClick={() => { setSelectedWorkshopId(w.id); setSelectedSlot(null); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group">
                   <div className="flex-1 min-w-0 pr-4">
                     <h3 className="font-extrabold text-lg text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{String(w.title || '')}</h3>
                     <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{String(w.speaker || '')}</p>
-                    <div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400">
-                      <MapPin size={10} className="text-[#E8BA21]/50" />
-                      {w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}
-                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400"><MapPin size={10} className="text-[#E8BA21]/50" />{w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}</div>
                   </div>
                   <ChevronRight size={20} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors" />
                 </div>
@@ -546,32 +539,17 @@ export default function App() {
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center gap-2">
             {LINKS.logo ? (
-              <img 
-                src={getDirectDriveLink(LINKS.logo)} 
-                alt="Logo" 
-                className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} 
-                onLoad={() => setLogoLoaded(true)}
-                onError={() => { setLogoLoaded(false); }}
-              />
+              <img src={getDirectDriveLink(LINKS.logo)} alt="Logo" className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} onLoad={() => setLogoLoaded(true)} onError={() => setLogoLoaded(false)} />
             ) : null}
-            {!logoLoaded && (
-              <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>
-            )}
+            {!logoLoaded && <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>}
           </div>
-          {conferenceUser && (
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">
-              {conferenceUser.name.charAt(0)}
-            </div>
-          )}
+          {conferenceUser && <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{conferenceUser.name.charAt(0)}</div>}
         </div>
       </header>
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-6 pb-32">
         {selectedWorkshopId ? (
-          <WorkshopDetailView 
-            workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} 
-            onBack={() => setSelectedWorkshopId(null)} 
-          />
+          <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} />
         ) : (
           <>
             {activeTab === 'updates' && (
@@ -584,19 +562,12 @@ export default function App() {
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-extrabold mb-1 text-gray-900 leading-tight">{String(post.title || '')}</h3>
                         <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{String(post.body || '')}</p>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                          <Clock size={12}/> {formatTimestamp(post.timestamp)} • {String(post.author || 'Team')}
-                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {String(post.author || 'Team')}</div>
                       </div>
                       {post.image && (
-                        <div 
-                          className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" 
-                          onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}
-                        >
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}>
                           <img src={getDirectDriveLink(String(post.image))} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Thumbnail" onError={(e) => e.target.style.display = 'none'} />
-                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors">
-                            <Maximize2 size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" />
-                          </div>
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors"><Maximize2 size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" /></div>
                         </div>
                       )}
                     </div>
@@ -613,20 +584,11 @@ export default function App() {
                   {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => (
                     <div key={ev.id} className="flex gap-4 text-left">
                       <div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div>
-                      <div 
-                        onClick={() => handleSlotClick(ev)}
-                        className={`flex-1 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden transition-all ${ev.type === 'workshop_slot' ? 'cursor-pointer hover:border-[#E8BA21]/40 hover:shadow-md' : ''}`}
-                      >
+                      <div onClick={() => handleSlotClick(ev)} className={`flex-1 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden transition-all ${ev.type === 'workshop_slot' ? 'cursor-pointer hover:border-[#E8BA21]/40 hover:shadow-md' : ''}`}>
                         {(ev.type === 'main' && !ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4563AD]" />}
                         {(ev.type === 'workshop_slot' || ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E8BA21]" />}
-                        <div className="flex items-center justify-between gap-4">
-                          <h4 className="font-bold text-lg text-gray-900">{String(ev.title || '')}</h4>
-                          {ev.type === 'workshop_slot' && <ChevronRight size={16} className="text-[#E8BA21] opacity-50" />}
-                        </div>
-                        <div className="text-xs text-gray-400 mt-1 uppercase font-bold flex items-center gap-1">
-                          <MapPin size={12}/> 
-                          {ev.type === 'workshop_slot' ? 'Select a Workshop' : (ev.location || 'Multiple Rooms')}
-                        </div>
+                        <div className="flex items-center justify-between gap-4"><h4 className="font-bold text-lg text-gray-900">{String(ev.title || '')}</h4>{ev.type === 'workshop_slot' && <ChevronRight size={16} className="text-[#E8BA21] opacity-50" />}</div>
+                        <div className="text-xs text-gray-400 mt-1 uppercase font-bold flex items-center gap-1"><MapPin size={12}/>{ev.type === 'workshop_slot' ? 'Select a Workshop' : (ev.location || 'Multiple Rooms')}</div>
                       </div>
                     </div>
                   ))}
@@ -637,38 +599,12 @@ export default function App() {
             {activeTab === 'workshops' && (
               <div className="space-y-8 text-left animate-in fade-in">
                 <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Workshops</h2>
-                <div className="relative group">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/>
-                  <input type="text" placeholder="Search topics or speakers..." className="w-full pl-12 p-5 rounded-[2rem] border border-gray-100 bg-white outline-none focus:ring-4 focus:ring-[#4563AD]/5 shadow-sm font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
-                </div>
+                <div className="relative group"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/><input type="text" placeholder="Search topics or speakers..." className="w-full pl-12 p-5 rounded-[2rem] border border-gray-100 bg-white outline-none focus:ring-4 focus:ring-[#4563AD]/5 shadow-sm font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="grid gap-4">
                   {filteredWorkshops.map(w => (
                     <div key={w.id} onClick={() => setSelectedWorkshopId(w.id)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex flex-col group">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-extrabold text-xl text-gray-900 leading-tight">{String(w.title || '')}</h3>
-                          <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-0.5">{String(w.speaker || '')}</p>
-                        </div>
-                        <ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" />
-                      </div>
-                      
-                      {w.sessions && w.sessions.length > 0 && (
-                        <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">
-                          {w.sessions.map((session, sIdx) => (
-                            <div key={`tile-session-${sIdx}`} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit">
-                              <div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter">
-                                <Clock size={10} className="text-gray-400" />
-                                {session.day} {session.time}
-                              </div>
-                              <div className="w-px h-2 bg-gray-200" />
-                              <div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter">
-                                <MapPin size={10} className="opacity-50" />
-                                {session.room}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><h3 className="font-extrabold text-xl text-gray-900 leading-tight">{String(w.title || '')}</h3><p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-0.5">{String(w.speaker || '')}</p></div><ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" /></div>
+                      {w.sessions && w.sessions.length > 0 && <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">{w.sessions.map((session, sIdx) => (<div key={`tile-session-${sIdx}`} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit"><div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter"><Clock size={10} className="text-gray-400" />{session.day} {session.time}</div><div className="w-px h-2 bg-gray-200" /><div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter"><MapPin size={10} className="opacity-50" />{session.room}</div></div>))}</div>}
                     </div>
                   ))}
                 </div>
@@ -678,36 +614,19 @@ export default function App() {
             {activeTab === 'my-wish' && (
               conferenceUser ? (
                 <div className="space-y-8 text-left animate-in fade-in">
-                  <div className="flex justify-between items-end">
-                    <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div>
-                    <button onClick={handleLogout} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button>
-                  </div>
+                  <div className="flex justify-between items-end"><div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div><button onClick={handleLogout} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button></div>
                   <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                   <div className="space-y-6">
                     {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => {
                       const userSelection = String(conferenceUser.workshops[ev.id.toLowerCase()] || '');
-                      const workshop = workshopLookupMap.get(userSelection.toLowerCase().trim()) || 
-                                       Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(userSelection));
-                      
+                      const workshop = workshopLookupMap.get(userSelection.toLowerCase().trim()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(userSelection));
                       const isLunch = userSelection.toLowerCase().includes('lunch') || workshop?.id === 'lunch-special';
                       const isMain = ev.type === 'main' || isLunch;
                       const dayAbbr = selectedDay.substring(0, 3);
                       const sessionMatch = workshop?.sessions?.find(s => s.day === dayAbbr && s.time === ev.time);
                       const roomName = sessionMatch ? sessionMatch.room : (ev.location || '');
-                      
                       return (
-                        <div key={`personal-${ev.id}`} className="flex gap-4">
-                          <div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div>
-                          <div 
-                            className={`flex-1 p-5 rounded-3xl border transition-all relative overflow-hidden ${isMain ? 'bg-white border-[#4563AD] shadow-md' : workshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white/50 border-gray-100 shadow-sm'}`} 
-                            onClick={() => (workshop && !isLunch) ? setSelectedWorkshopId(workshop.id) : null}
-                          >
-                            {(isMain || workshop) && <div className={`absolute top-0 left-0 w-1.5 h-full ${isMain ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}
-                            <h4 className={`font-bold text-lg ${!workshop && ev.type === 'workshop_slot' ? 'italic text-gray-400' : 'text-gray-900'}`}>{workshop ? String(workshop.title || '') : (ev.type === 'workshop_slot' ? (userSelection || 'No session selected') : String(ev.title || ''))}</h4>
-                            {workshop && !isLunch && <p className="text-xs text-[#ED4E23] font-bold mt-1 uppercase tracking-widest">with {String(workshop.speaker || '')}</p>}
-                            {roomName && <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 tracking-wider"><MapPin size={12} className={isMain ? "text-[#4563AD]/40" : "text-[#E8BA21]/40"} />{String(roomName)}</div>}
-                          </div>
-                        </div>
+                        <div key={`personal-${ev.id}`} className="flex gap-4"><div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div><div className={`flex-1 p-5 rounded-3xl border transition-all relative overflow-hidden ${isMain ? 'bg-white border-[#4563AD] shadow-md' : workshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white/50 border-gray-100 shadow-sm'}`} onClick={() => (workshop && !isLunch) ? setSelectedWorkshopId(workshop.id) : null}>{(isMain || workshop) && <div className={`absolute top-0 left-0 w-1.5 h-full ${isMain ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}<h4 className={`font-bold text-lg ${!workshop && ev.type === 'workshop_slot' ? 'italic text-gray-400' : 'text-gray-900'}`}>{workshop ? String(workshop.title || '') : (ev.type === 'workshop_slot' ? (userSelection || 'No session selected') : String(ev.title || ''))}</h4>{workshop && !isLunch && <p className="text-xs text-[#ED4E23] font-bold mt-1 uppercase tracking-widest">with {String(workshop.speaker || '')}</p>}{roomName && <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 tracking-wider"><MapPin size={12} className={isMain ? "text-[#4563AD]/40" : "text-[#E8BA21]/40"} />{String(roomName)}</div>}</div></div>
                       );
                     })}
                   </div>
@@ -715,36 +634,12 @@ export default function App() {
               ) : (
                 <div className="flex flex-col space-y-8 text-left animate-in fade-in">
                   {matchingUsers.length > 0 ? (
-                    <div className="pt-4">
-                      <button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button>
-                      <h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2>
-                      <div className="space-y-3 mt-6">
-                        {matchingUsers.map((u, i) => (
-                          <button key={`user-choice-${i}`} onClick={() => completeUserSetup(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:border-[#ED4E23] shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || '')).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>
-                        ))}
-                      </div>
-                    </div>
+                    <div className="pt-4"><button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button><h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2><div className="space-y-3 mt-6">{matchingUsers.map((u, i) => (<button key={`user-choice-${i}`} onClick={() => completeUserSetup(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:border-[#ED4E23] shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || '')).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>))}</div></div>
                   ) : (
                     <>
-                      <div className="pt-4 pb-2">
-                        <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
-                        <p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p>
-                      </div>
-
-                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4">
-                        <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2>
-                        <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
-                        <form onSubmit={(e) => { e.preventDefault(); performLoginCheck(email); }} className="space-y-4">
-                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />
-                          {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}
-                          <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
-                        </form>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-4">
-                        <div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div>
-                        <a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a>
-                      </div>
+                      <div className="pt-4 pb-2"><h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1><p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p></div>
+                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4"><h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2><p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p><form onSubmit={(e) => { e.preventDefault(); performLoginCheck(email); }} className="space-y-4"><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />{error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}<button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button></form></div>
+                      <div className="grid grid-cols-1 gap-4"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
                 </div>
@@ -755,27 +650,7 @@ export default function App() {
               <div className="animate-in fade-in space-y-10 text-left">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
                 <div className="space-y-8">
-                  {VENUE_MAP.map((location, idx) => {
-                    const Icon = location.icon;
-                    return (
-                    <div key={`loc-${idx}`} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}>
-                      <div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40">
-                        <div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><Icon size={22} /></div>
-                        <div>
-                          <h3 className="text-xl font-extrabold text-gray-900">{String(location.zone || '')}</h3>
-                          <a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{String(location.address || '')}<ExternalLink size={12} className="text-gray-300" /></a>
-                        </div>
-                      </div>
-                      <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {location.rooms.map((room, rIdx) => (
-                          <div key={`room-${rIdx}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 group/room hover:border-[#E8BA21]/20 transition-all">
-                            <span className="text-sm font-bold text-gray-700">{String(room.name || '')}</span>
-                            <span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{String(room.note || '')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )})}
+                  {VENUE_MAP.map((location, idx) => (<div key={`loc-${idx}`} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}><div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40"><div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><location.icon size={22} /></div><div><h3 className="text-xl font-extrabold text-gray-900">{String(location.zone || '')}</h3><a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{String(location.address || '')}<ExternalLink size={12} className="text-gray-300" /></a></div></div><div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3">{location.rooms.map((room, rIdx) => (<div key={`room-${rIdx}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 group/room hover:border-[#E8BA21]/20 transition-all"><span className="text-sm font-bold text-gray-700">{String(room.name || '')}</span><span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{String(room.note || '')}</span></div>))}</div></div>))}
                 </div>
               </div>
             )}
