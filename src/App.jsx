@@ -4,20 +4,21 @@ import {
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
   Sparkles, Calendar, Building2, DoorOpen, 
   Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
-  Maximize2, Eye
+  Maximize2, Eye, Ticket
 } from 'lucide-react';
 
-// Firebase Imports for Session Persistence
+// Firebase Imports
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
   workshopCatalog: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSnhme1HIsh7TxAro8Md1Xwp3fFdxizrFCNBbSLYYlRlWQGf2ndODy3XYte8XDwjyGOWVaBL_tKk4A2/pub?output=csv",
   updatesFeed: "https://docs.google.com/spreadsheets/d/e/2PACX-1vRf69vgjPStu-Y718QfFL7JiD404Y3s9raQ4cFegH4ocqotbE1XE77IXffBQ6iMffx4uUW77g5du9ma/pub?output=csv",
-  logo: "https://drive.google.com/uc?export=download&id=1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP" 
+  logo: "https://drive.google.com/uc?export=download&id=1ZGhLmeIFbAwIK6G84_eV-IzYr9MLMpOP",
+  brushfireUrl: "https://brushfire.com/fga/wish-conference/588888" // Fallback link
 };
 
 // --- FIREBASE INITIALIZATION ---
@@ -51,21 +52,15 @@ const MASTER_SCHEDULE = [
 
 const VENUE_MAP = [
   { zone: "FGA Melbourne", address: "38 Lexton Road, Box Hill North", mapUrl: CONFERENCE_INFO.googleMapsUrl, icon: Building2, rooms: [{name: "Lobby", note: "Level 2"}, {name: "Sanctuary", note: "Level 2"}, {name: "Meeting Room", note: "Level 1"}, {name: "Rooftop", note: "Top Level"}] },
-  // Updated mapUrl for 4/41 Lexton Road
   { zone: "4/41 Lexton Road", address: "4/41 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/xbrbPsctC5nw8GRk9", icon: Building2, rooms: [{name: "Main Space", note: "Upstairs"}] },
   { zone: "7/41 Lexton Road", address: "7/41 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/wdFztK1KFQr62LsZ6", icon: DoorOpen, rooms: [{name: "Dance Studio 1", note: "Ground"}, {name: "Dance Studio 2", note: "Level 1"}] },
-  // Updated mapUrl for 61 Lexton Road
   { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/fsJV5yCWrXM2XKzS7", icon: MapPinIcon, rooms: [{name: "Main Area", note: "Ground"}, {name: "Classroom", note: "Level 1"}] }
 ];
 
+// Helper Functions
 function normalizeString(str) {
   if (!str) return '';
-  return str.toString().toLowerCase().trim()
-    .replace(/\s+/g, ' ')      
-    .replace(/['"“”‘’]/g, '')  
-    .replace(/[—–-]/g, ' ')   
-    .replace(/[^\w\s]/g, '')  
-    .trim();
+  return str.toString().toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^\w\s]/g, '');
 }
 
 function parseCSV(text) {
@@ -126,21 +121,6 @@ function formatTimestamp(ts) {
       const datePart = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
       const timePart = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
       return `${datePart}, ${timePart}`;
-    }
-    const parts = ts.split(' ');
-    if (parts.length >= 2) {
-      const dateStr = parts[0];
-      const timePart = parts[1];
-      const timeSubParts = timePart.split(':');
-      const dateClean = dateStr.split('/').slice(0, 2).join('/');
-      if (timeSubParts.length >= 2) {
-        let hours = parseInt(timeSubParts[0], 10);
-        const minutes = timeSubParts[1];
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        return `${dateClean}, ${hours}:${minutes} ${ampm}`;
-      }
     }
     return ts;
   } catch (e) { return ts; }
@@ -226,7 +206,7 @@ function WorkshopDetailView({ workshop, onBack }) {
           <p className="text-lg md:text-xl font-bold text-[#ED4E23] mb-8">by {String(workshop.speaker || '')}</p>
           
           {workshop.sessions && workshop.sessions.length > 0 && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mb-8">
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mb-8 text-left">
               <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
                 <Calendar size={14} /> Schedule & Location
               </h3>
@@ -269,11 +249,7 @@ function WorkshopDetailView({ workshop, onBack }) {
               <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10 text-left">About the Speaker</h3>
               <div className="flex items-start gap-4 relative z-10 text-left">
                 <div className="w-20 h-20 rounded-2xl bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center overflow-hidden shadow-sm shrink-0 font-bold text-[#ED4E23] text-2xl uppercase">
-                   {workshop.photo ? (
-                     <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" />
-                   ) : (
-                     String(workshop.speaker || 'T').charAt(0)
-                   )}
+                   {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" /> : String(workshop.speaker || 'T').charAt(0)}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-extrabold text-gray-900 text-base leading-tight">{String(workshop.speaker || '')}</h4>
@@ -289,7 +265,6 @@ function WorkshopDetailView({ workshop, onBack }) {
 }
 
 export default function App() {
-  const [fbUser, setFbUser] = useState(null); 
   const [conferenceUser, setConferenceUser] = useState(null); 
   const [activeTab, setActiveTab] = useState('updates');
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
@@ -310,10 +285,30 @@ export default function App() {
   const [workshops, setWorkshops] = useState([]);
   const [updates, setUpdates] = useState([]);
 
+  // Brushfire Setup
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = "https://widgetclient.brushfire.com/brushfire.min.js";
+    script.async = true;
+    document.head.appendChild(script);
+    return () => {
+      const existing = document.querySelector('script[src*="brushfire.min.js"]');
+      if (existing) document.head.removeChild(existing);
+    };
+  }, []);
+
+  const openBrushfire = () => {
+    if (window.brushfire) {
+      window.brushfire("open", {widgetId: "cdc858de-c50e-490f-a764-212bc3848421"});
+    } else {
+      // Fallback if widget script fails to load
+      window.open(LINKS.brushfireUrl, '_blank');
+    }
+  };
+
   const completeUserSetup = useCallback(async (u, emailStr) => {
     const fKey = Object.keys(u).find(k => k.includes('first'));
     const lKey = Object.keys(u).find(k => k.includes('last'));
-    
     setConferenceUser({ 
       name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], 
       email: emailStr, 
@@ -321,23 +316,16 @@ export default function App() {
     });
     setMatchingUsers([]);
     setActiveTab('my-wish');
-
     if (auth.currentUser) {
       try {
         const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
-        await setDoc(sessionDoc, { 
-          email: emailStr, 
-          updatedAt: new Date().toISOString() 
-        }, { merge: true });
+        await setDoc(sessionDoc, { email: emailStr, updatedAt: new Date().toISOString() }, { merge: true });
       } catch (err) { console.error("Session save failed", err); }
     }
   }, []);
 
   const performLoginCheck = useCallback(async (targetEmail) => {
-    if (!targetEmail) {
-      setIsSessionRestored(true);
-      return;
-    };
+    if (!targetEmail) { setIsSessionRestored(true); return; }
     setIsLoadingUser(true);
     setError('');
     try {
@@ -347,58 +335,35 @@ export default function App() {
       const rawData = parseCSV(csv);
       const emailStr = targetEmail.trim().toLowerCase();
       const users = rawData.filter(row => Object.values(row).some(val => String(val).toLowerCase().trim() === emailStr));
-      
-      if (users.length === 1) {
-        await completeUserSetup(users[0], emailStr);
-      } else if (users.length > 1) {
-        setMatchingUsers(users);
-      } else {
-        setError(`"${emailStr}" not found in registration list.`);
-        if (auth.currentUser) {
-          const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
-          await deleteDoc(sessionDoc).catch(() => {});
-        }
-      }
+      if (users.length === 1) await completeUserSetup(users[0], emailStr);
+      else if (users.length > 1) setMatchingUsers(users);
+      else setError(`"${emailStr}" not found in registration list.`);
     } catch (e) { setError("Error connecting to registry."); } 
-    finally { 
-      setIsLoadingUser(false); 
-      setIsSessionRestored(true); 
-    }
+    finally { setIsLoadingUser(false); setIsSessionRestored(true); }
   }, [completeUserSetup]);
+
+  const handleLogin = (e) => {
+    if (e) e.preventDefault();
+    performLoginCheck(email);
+  };
 
   useEffect(() => {
     const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        console.error("Auth init failed", err);
-        setIsSessionRestored(true);
-      }
+      try { await signInAnonymously(auth); } catch (err) { setIsSessionRestored(true); }
     };
     initAuth();
-
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setFbUser(user);
       if (user) {
         try {
-          const sessionDoc = doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current');
-          const snap = await getDoc(sessionDoc);
+          const snap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'));
           if (snap.exists()) {
             const data = snap.data();
             if (data.lastSeenUpdates) setLastSeenUpdates(data.lastSeenUpdates);
-            if (data.email) {
-              performLoginCheck(data.email);
-            } else {
-              setIsSessionRestored(true);
-            }
-          } else { setIsSessionRestored(true); }
-        } catch (err) {
-          console.error("Session restore error", err);
-          setIsSessionRestored(true);
-        }
-      } else {
-        setIsSessionRestored(true);
-      }
+            if (data.email) performLoginCheck(data.email);
+            else setIsSessionRestored(true);
+          } else setIsSessionRestored(true);
+        } catch (err) { setIsSessionRestored(true); }
+      } else setIsSessionRestored(true);
     });
     return () => unsubscribe();
   }, [performLoginCheck]);
@@ -410,31 +375,25 @@ export default function App() {
         const catalogRes = await fetch(`${LINKS.workshopCatalog}&t=${timestamp}`, { cache: "no-store" });
         const catalogCsv = await catalogRes.text();
         const catalogData = parseCSV(catalogCsv);
-        setWorkshops(catalogData.map(row => ({
-          ...row, 
-          sessions: parseSessionString(String(row.sessions || ''))
-        })).sort((a,b) => String(a.title || '').localeCompare(String(b.title || ''))));
-
+        setWorkshops(catalogData.map(row => ({ ...row, sessions: parseSessionString(String(row.sessions || '')) })).sort((a,b) => String(a.title || '').localeCompare(String(b.title || ''))));
+        
         const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
-        const updatesCsv = await updatesRes.text();
-        const rawUpdates = parseCSV(updatesCsv);
+        const rawUpdates = parseCSV(await updatesRes.text());
         const mappedUpdates = rawUpdates.map(u => {
           const rawTs = u.timestamp || '';
-          const parsedDate = new Date(rawTs);
           return {
             title: u.title || u.updatetitle || u.heading || '',
             body: u.body || u.message || u.updatemessage || '',
             author: u.author || u.postedby || u.name || 'Team',
             image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
             timestamp: rawTs,
-            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 0
+            ms: !isNaN(new Date(rawTs).getTime()) ? new Date(rawTs).getTime() : 0
           };
         });
         setUpdates(mappedUpdates.reverse());
       } catch (err) { console.error("Feed load error", err); }
       setIsDataLoaded(true);
     };
-
     fetchData();
     const interval = setInterval(fetchData, 60000); 
     return () => clearInterval(interval);
@@ -445,23 +404,18 @@ export default function App() {
       const latestTs = Math.max(...updates.map(u => u.ms));
       if (latestTs > lastSeenUpdates) {
         setLastSeenUpdates(latestTs);
-        const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
-        setDoc(sessionDoc, { lastSeenUpdates: latestTs }, { merge: true }).catch(() => {});
+        setDoc(doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current'), { lastSeenUpdates: latestTs }, { merge: true }).catch(() => {});
       }
     }
   }, [activeTab, updates, lastSeenUpdates]);
 
-  const unreadCount = useMemo(() => {
-    if (activeTab === 'updates') return 0;
-    return updates.filter(u => u.ms > lastSeenUpdates).length;
-  }, [updates, lastSeenUpdates, activeTab]);
+  const unreadCount = useMemo(() => activeTab === 'updates' ? 0 : updates.filter(u => u.ms > lastSeenUpdates).length, [updates, lastSeenUpdates, activeTab]);
 
-  const handleLogout = async () => {
-    if (auth.currentUser) {
-      const sessionDoc = doc(db, 'artifacts', appId, 'users', auth.currentUser.uid, 'session', 'current');
-      await deleteDoc(sessionDoc).catch(() => {});
-    }
-    setConferenceUser(null);
+  const handleSlotClick = (ev) => {
+    if (ev.type !== 'workshop_slot') return;
+    const dayAbbr = selectedDay.substring(0, 3);
+    const matches = workshops.filter(w => w.sessions?.some(s => s.day === dayAbbr && s.time === ev.time));
+    setSelectedSlot({ title: ev.title, dayAbbr, time: ev.time, matches });
   };
 
   const workshopLookupMap = useMemo(() => {
@@ -479,15 +433,6 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
-  const handleSlotClick = (ev) => {
-    if (ev.type !== 'workshop_slot') return;
-    const dayAbbr = selectedDay.substring(0, 3);
-    const matches = workshops.filter(w => 
-      w.sessions?.some(s => s.day === dayAbbr && s.time === ev.time)
-    );
-    setSelectedSlot({ title: ev.title, dayAbbr, time: ev.time, matches });
-  };
-
   const isSyncing = !isDataLoaded || !isSessionRestored;
 
   if (isSyncing) return (
@@ -499,18 +444,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
-      {/* Photo Lightbox */}
       {selectedImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
           <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
-          <img src={selectedImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Full size update" />
+          <img src={selectedImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Update" />
         </div>
       )}
 
-      {/* Slot Workshops Modal Overlay */}
       {selectedSlot && (
         <div className="fixed inset-0 z-[100] bg-[#FCF5EB]/95 backdrop-blur-md flex flex-col animate-in slide-in-from-bottom-8 duration-300">
-          <div className="w-full max-w-2xl mx-auto flex flex-col h-full px-6">
+          <div className="w-full max-w-2xl mx-auto flex flex-col h-full px-6 text-left">
             <div className="py-6 flex items-center justify-between border-b border-[#E8BA21]/20">
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-[#ED4E23] uppercase tracking-widest">{selectedSlot.dayAbbr} • {selectedSlot.time}</span>
@@ -523,8 +466,8 @@ export default function App() {
               {selectedSlot.matches.map(w => (
                 <div key={`slot-item-${w.id}`} onClick={() => { setSelectedWorkshopId(w.id); setSelectedSlot(null); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group">
                   <div className="flex-1 min-w-0 pr-4">
-                    <h3 className="font-extrabold text-lg text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{String(w.title || '')}</h3>
-                    <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{String(w.speaker || '')}</p>
+                    <h3 className="font-extrabold text-lg text-gray-900 leading-tight group-hover:text-[#4563AD] transition-colors">{w.title}</h3>
+                    <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{w.speaker}</p>
                     <div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400"><MapPin size={10} className="text-[#E8BA21]/50" />{w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}</div>
                   </div>
                   <ChevronRight size={20} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors" />
@@ -538,9 +481,7 @@ export default function App() {
       <header className="w-full bg-[#FCF5EB] border-b border-[#E8BA21]/20 sticky top-0 z-40 h-20 shrink-0">
         <div className="max-w-2xl mx-auto p-5 flex justify-between items-center h-full">
           <div className="flex items-center gap-2">
-            {LINKS.logo ? (
-              <img src={getDirectDriveLink(LINKS.logo)} alt="Logo" className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} onLoad={() => setLogoLoaded(true)} onError={() => setLogoLoaded(false)} />
-            ) : null}
+            {LINKS.logo ? <img src={getDirectDriveLink(LINKS.logo)} alt="Logo" className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} onLoad={() => setLogoLoaded(true)} onError={() => setLogoLoaded(false)} /> : null}
             {!logoLoaded && <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>}
           </div>
           {conferenceUser && <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{conferenceUser.name.charAt(0)}</div>}
@@ -560,13 +501,13 @@ export default function App() {
                   {updates.map((post, idx) => (
                     <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden flex items-start gap-4 p-5 animate-in slide-in-from-bottom-4">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-extrabold mb-1 text-gray-900 leading-tight">{String(post.title || '')}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{String(post.body || '')}</p>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {String(post.author || 'Team')}</div>
+                        <h3 className="text-lg font-extrabold mb-1 text-gray-900 leading-tight">{post.title}</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{post.body}</p>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {post.author}</div>
                       </div>
                       {post.image && (
-                        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" onClick={() => setSelectedImage(getDirectDriveLink(String(post.image)))}>
-                          <img src={getDirectDriveLink(String(post.image))} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Thumbnail" onError={(e) => e.target.style.display = 'none'} />
+                        <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" onClick={() => setSelectedImage(getDirectDriveLink(post.image))}>
+                          <img src={getDirectDriveLink(post.image)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Post" onError={(e) => e.target.style.display = 'none'} />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors"><Maximize2 size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" /></div>
                         </div>
                       )}
@@ -587,7 +528,7 @@ export default function App() {
                       <div onClick={() => handleSlotClick(ev)} className={`flex-1 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm relative overflow-hidden transition-all ${ev.type === 'workshop_slot' ? 'cursor-pointer hover:border-[#E8BA21]/40 hover:shadow-md' : ''}`}>
                         {(ev.type === 'main' && !ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#4563AD]" />}
                         {(ev.type === 'workshop_slot' || ev.title.toLowerCase().includes('lunch')) && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E8BA21]" />}
-                        <div className="flex items-center justify-between gap-4"><h4 className="font-bold text-lg text-gray-900">{String(ev.title || '')}</h4>{ev.type === 'workshop_slot' && <ChevronRight size={16} className="text-[#E8BA21] opacity-50" />}</div>
+                        <div className="flex items-center justify-between gap-4"><h4 className="font-bold text-lg text-gray-900">{ev.title}</h4>{ev.type === 'workshop_slot' && <ChevronRight size={16} className="text-[#E8BA21] opacity-50" />}</div>
                         <div className="text-xs text-gray-400 mt-1 uppercase font-bold flex items-center gap-1"><MapPin size={12}/>{ev.type === 'workshop_slot' ? 'Select a Workshop' : (ev.location || 'Multiple Rooms')}</div>
                       </div>
                     </div>
@@ -603,8 +544,8 @@ export default function App() {
                 <div className="grid gap-4">
                   {filteredWorkshops.map(w => (
                     <div key={w.id} onClick={() => setSelectedWorkshopId(w.id)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex flex-col group">
-                      <div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><h3 className="font-extrabold text-xl text-gray-900 leading-tight">{String(w.title || '')}</h3><p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-0.5">{String(w.speaker || '')}</p></div><ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" /></div>
-                      {w.sessions && w.sessions.length > 0 && <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">{w.sessions.map((session, sIdx) => (<div key={`tile-session-${sIdx}`} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit"><div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter"><Clock size={10} className="text-gray-400" />{session.day} {session.time}</div><div className="w-px h-2 bg-gray-200" /><div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter"><MapPin size={10} className="opacity-50" />{session.room}</div></div>))}</div>}
+                      <div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><h3 className="font-extrabold text-xl text-gray-900 leading-tight">{w.title}</h3><p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-0.5">{w.speaker}</p></div><ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" /></div>
+                      {w.sessions && w.sessions.length > 0 && <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">{w.sessions.map((session, sIdx) => (<div key={sIdx} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit"><div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter"><Clock size={10} className="text-gray-400" />{session.day} {session.time}</div><div className="w-px h-2 bg-gray-200" /><div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter"><MapPin size={10} className="opacity-50" />{session.room}</div></div>))}</div>}
                     </div>
                   ))}
                 </div>
@@ -614,7 +555,7 @@ export default function App() {
             {activeTab === 'my-wish' && (
               conferenceUser ? (
                 <div className="space-y-8 text-left animate-in fade-in">
-                  <div className="flex justify-between items-end"><div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div><button onClick={handleLogout} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button></div>
+                  <div className="flex justify-between items-end"><div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div><button onClick={() => setConferenceUser(null)} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button></div>
                   <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                   <div className="space-y-6">
                     {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => {
@@ -626,7 +567,15 @@ export default function App() {
                       const sessionMatch = workshop?.sessions?.find(s => s.day === dayAbbr && s.time === ev.time);
                       const roomName = sessionMatch ? sessionMatch.room : (ev.location || '');
                       return (
-                        <div key={`personal-${ev.id}`} className="flex gap-4"><div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div><div className={`flex-1 p-5 rounded-3xl border transition-all relative overflow-hidden ${isMain ? 'bg-white border-[#4563AD] shadow-md' : workshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white/50 border-gray-100 shadow-sm'}`} onClick={() => (workshop && !isLunch) ? setSelectedWorkshopId(workshop.id) : null}>{(isMain || workshop) && <div className={`absolute top-0 left-0 w-1.5 h-full ${isMain ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}<h4 className={`font-bold text-lg ${!workshop && ev.type === 'workshop_slot' ? 'italic text-gray-400' : 'text-gray-900'}`}>{workshop ? String(workshop.title || '') : (ev.type === 'workshop_slot' ? (userSelection || 'No session selected') : String(ev.title || ''))}</h4>{workshop && !isLunch && <p className="text-xs text-[#ED4E23] font-bold mt-1 uppercase tracking-widest">with {String(workshop.speaker || '')}</p>}{roomName && <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 tracking-wider"><MapPin size={12} className={isMain ? "text-[#4563AD]/40" : "text-[#E8BA21]/40"} />{String(roomName)}</div>}</div></div>
+                        <div key={`personal-${ev.id}`} className="flex gap-4">
+                          <div className="w-16 text-right font-bold text-gray-400 text-sm py-4">{ev.time}</div>
+                          <div className={`flex-1 p-5 rounded-3xl border transition-all relative overflow-hidden ${isMain ? 'bg-white border-[#4563AD] shadow-md' : workshop ? 'bg-white border-[#E8BA21] shadow-md cursor-pointer hover:border-[#ED4E23]' : 'bg-white/50 border-gray-100 shadow-sm'}`} onClick={() => (workshop && !isLunch) ? setSelectedWorkshopId(workshop.id) : null}>
+                            {(isMain || workshop) && <div className={`absolute top-0 left-0 w-1.5 h-full ${isMain ? 'bg-[#4563AD]' : 'bg-[#E8BA21]'}`} />}
+                            <h4 className={`font-bold text-lg ${!workshop && ev.type === 'workshop_slot' ? 'italic text-gray-400' : 'text-gray-900'}`}>{workshop ? workshop.title : (ev.type === 'workshop_slot' ? (userSelection || 'No session selected') : ev.title)}</h4>
+                            {workshop && !isLunch && <p className="text-xs text-[#ED4E23] font-bold mt-1 uppercase tracking-widest">with {workshop.speaker}</p>}
+                            {roomName && <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold uppercase text-gray-400 tracking-wider"><MapPin size={12} className={isMain ? "text-[#4563AD]/40" : "text-[#E8BA21]/40"} />{roomName}</div>}
+                          </div>
+                        </div>
                       );
                     })}
                   </div>
@@ -634,11 +583,28 @@ export default function App() {
               ) : (
                 <div className="flex flex-col space-y-8 text-left animate-in fade-in">
                   {matchingUsers.length > 0 ? (
-                    <div className="pt-4"><button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button><h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2><div className="space-y-3 mt-6">{matchingUsers.map((u, i) => (<button key={`user-choice-${i}`} onClick={() => completeUserSetup(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between hover:border-[#ED4E23] shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || '')).trim()}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>))}</div></div>
+                    <div className="pt-4"><button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button><h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2><div className="space-y-3 mt-6">{matchingUsers.map((u, i) => (<button key={i} onClick={() => completeUserSetup(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || ''))}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>))}</div></div>
                   ) : (
                     <>
                       <div className="pt-4 pb-2"><h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1><p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p></div>
-                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4"><h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2><p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p><form onSubmit={(e) => { e.preventDefault(); performLoginCheck(email); }} className="space-y-4"><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />{error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}<button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button></form></div>
+                      
+                      <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4">
+                        <h2 className="text-2xl font-extrabold text-gray-900 mb-2">Sign In</h2>
+                        <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                          <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />
+                          {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {String(error)}</div>}
+                          <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
+                        </form>
+                      </div>
+
+                      <div className="bg-[#4563AD]/5 p-8 md:p-10 rounded-[3rem] border border-[#4563AD]/20 text-center overflow-hidden relative group">
+                        <Ticket className="mx-auto text-[#4563AD] mb-4 group-hover:scale-110 transition-transform" size={40} />
+                        <h2 className="text-2xl font-extrabold text-gray-900 mb-2 font-serif">Need a Ticket?</h2>
+                        <p className="text-sm text-gray-500 font-medium mb-8">Purchase through Brushfire.</p>
+                        <button onClick={openBrushfire} className="w-full bg-[#4563AD] text-white font-extrabold py-5 rounded-2xl shadow-lg hover:bg-[#4563AD]/90 transition-all active:scale-95">Get Tickets</button>
+                      </div>
+
                       <div className="grid grid-cols-1 gap-4"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
@@ -650,7 +616,15 @@ export default function App() {
               <div className="animate-in fade-in space-y-10 text-left">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
                 <div className="space-y-8">
-                  {VENUE_MAP.map((location, idx) => (<div key={`loc-${idx}`} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}><div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40"><div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><location.icon size={22} /></div><div><h3 className="text-xl font-extrabold text-gray-900">{String(location.zone || '')}</h3><a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{String(location.address || '')}<ExternalLink size={12} className="text-gray-300" /></a></div></div><div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3">{location.rooms.map((room, rIdx) => (<div key={`room-${rIdx}`} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 group/room hover:border-[#E8BA21]/20 transition-all"><span className="text-sm font-bold text-gray-700">{String(room.name || '')}</span><span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{String(room.note || '')}</span></div>))}</div></div>))}
+                  {VENUE_MAP.map((location, idx) => {
+                    const VenueIcon = location.icon;
+                    return (
+                      <div key={idx} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}>
+                        <div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40"><div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><VenueIcon size={22} /></div><div><h3 className="text-xl font-extrabold text-gray-900">{location.zone}</h3><a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{location.address}<ExternalLink size={12} className="text-gray-300" /></a></div></div>
+                        <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3">{location.rooms.map((room, rIdx) => (<div key={rIdx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 transition-all"><span className="text-sm font-bold text-gray-700">{room.name}</span><span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{room.note}</span></div>))}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
