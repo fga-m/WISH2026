@@ -70,7 +70,7 @@ const VENUE_MAP = [
   { zone: "61 Lexton Road", address: "61 Lexton Road, Box Hill North", mapUrl: "https://maps.app.goo.gl/fsJV5yCWrXM2XKzS7", icon: MapPinIcon, rooms: [{name: "Main Area", note: "Ground"}, {name: "Classroom", note: "Level 1"}] }
 ];
 
-// Helpers
+// Helper Functions
 function normalizeString(str) {
   if (!str) return '';
   return str.toString().toLowerCase().trim().replace(/\s+/g, ' ').replace(/[^\w\s]/g, '');
@@ -728,8 +728,8 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FCF5EB]/95 backdrop-blur-xl border-t border-[#E8BA21]/20 z-50 h-20">
         <div className="max-w-2xl mx-auto h-20 flex justify-around items-center px-4">
-          <NavItem icon={Bell} label="Updates" badge={unreadCount} isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={Bell} label="Updates" badge={unreadCount} isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
           <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
