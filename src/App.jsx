@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, 
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
   Sparkles, Calendar, Building2, DoorOpen, 
   Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
-  Maximize2, Eye, Ticket, Map as MapPinSquare
+  Maximize2, Eye, Ticket, Map as MapPinSquare, Plus, Minus, RefreshCcw
 } from 'lucide-react';
 
 // Firebase Imports
@@ -241,7 +241,7 @@ function WorkshopDetailView({ workshop, onBack }) {
                    {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" /> : workshop.speaker?.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
+                  <h4 className="font-extrabold text-gray-900 text-base leading-tight">{String(workshop.speaker || '')}</h4>
                   <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
                 </div>
               </div>
@@ -260,6 +260,14 @@ export default function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [email, setEmail] = useState('');
+  
+  // Interactive Image State
+  const [zoom, setZoom] = useState(1);
+  const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const imgRef = useRef(null);
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSessionRestored, setIsSessionRestored] = useState(false);
   const [logoLoaded, setLogoLoaded] = useState(false);
@@ -272,7 +280,15 @@ export default function App() {
   const [workshops, setWorkshops] = useState([]);
   const [updates, setUpdates] = useState([]);
 
-  // Brushfire Setup
+  // RESET ZOOM WHEN LIGHTBOX CLOSES
+  useEffect(() => {
+    if (!selectedImage) {
+      setZoom(1);
+      setOffset({ x: 0, y: 0 });
+    }
+  }, [selectedImage]);
+
+  // BRUSHFIRE SETUP
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://widgetclient.brushfire.com/brushfire.min.js";
@@ -424,6 +440,26 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
+  // ZOOM / PAN LOGIC
+  const handleStart = (clientX, clientY) => {
+    setIsDragging(true);
+    setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+  };
+
+  const handleMove = (clientX, clientY) => {
+    if (!isDragging) return;
+    setOffset({ x: clientX - dragStart.x, y: clientY - dragStart.y });
+  };
+
+  const handleEnd = () => setIsDragging(false);
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.01;
+    const newZoom = Math.min(Math.max(1, zoom + delta), 5);
+    setZoom(newZoom);
+  };
+
   const isSyncing = !isDataLoaded || !isSessionRestored;
 
   if (isSyncing) return (
@@ -434,13 +470,58 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left">
-      {/* Lightbox */}
+    <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left overflow-hidden">
+      {/* Interactive Zoomable Lightbox */}
       {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedImage(null)}>
-          <button className="absolute top-6 right-6 text-white p-2 hover:bg-white/10 rounded-full transition-colors"><X size={32} /></button>
-          <div className="w-full h-full flex items-center justify-center p-4">
-            <img src={getDirectDriveLink(selectedImage)} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" alt="Full view" />
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200 overflow-hidden touch-none"
+          onWheel={handleWheel}
+        >
+          {/* Header UI */}
+          <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-[110] pointer-events-none">
+            <div className="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-4 pointer-events-auto">
+              <button onClick={() => setZoom(Math.max(1, zoom - 0.5))} className="text-white/80 hover:text-white p-1 transition-colors"><Minus size={20}/></button>
+              <span className="text-white font-black text-xs min-w-[3rem] text-center">{Math.round(zoom * 100)}%</span>
+              <button onClick={() => setZoom(Math.min(5, zoom + 0.5))} className="text-white/80 hover:text-white p-1 transition-colors"><Plus size={20}/></button>
+              <div className="w-px h-4 bg-white/10 mx-1"></div>
+              <button onClick={() => { setZoom(1); setOffset({x:0,y:0}); }} className="text-white/80 hover:text-white p-1 transition-colors"><RefreshCcw size={16}/></button>
+            </div>
+            <button onClick={() => setSelectedImage(null)} className="p-3 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full transition-colors pointer-events-auto"><X size={28} /></button>
+          </div>
+
+          {/* Pan/Zoom Container */}
+          <div 
+            className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing"
+            onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+            onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
+            onMouseUp={handleEnd}
+            onMouseLeave={handleEnd}
+            onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
+            onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+            onTouchEnd={handleEnd}
+          >
+            <div 
+              style={{
+                transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
+                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+              }}
+              className="max-w-full max-h-full"
+            >
+              <img 
+                src={getDirectDriveLink(selectedImage)} 
+                className="max-w-full max-h-full object-contain shadow-2xl rounded-sm" 
+                alt="Map"
+                draggable={false}
+                onDoubleClick={() => {
+                   if (zoom > 1) { setZoom(1); setOffset({x:0,y:0}); }
+                   else { setZoom(2.5); }
+                }}
+              />
+            </div>
+          </div>
+          
+          <div className="absolute bottom-10 bg-black/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 text-white/50 text-[10px] font-bold uppercase tracking-widest pointer-events-none">
+            {zoom > 1 ? "Drag to move • Double-tap to reset" : "Pinch or scroll to zoom"}
           </div>
         </div>
       )}
@@ -482,7 +563,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-2xl w-full mx-auto p-6 pb-32">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-6 pb-32 overflow-y-auto">
         {selectedWorkshopId ? (
           <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} />
         ) : (
