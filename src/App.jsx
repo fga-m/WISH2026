@@ -266,7 +266,7 @@ export default function App() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const imgRef = useRef(null);
+  const [initialDistance, setInitialDistance] = useState(null);
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSessionRestored, setIsSessionRestored] = useState(false);
@@ -279,6 +279,14 @@ export default function App() {
   const [selectedDay, setSelectedDay] = useState('Friday');
   const [workshops, setWorkshops] = useState([]);
   const [updates, setUpdates] = useState([]);
+
+  // Helper for touch distance
+  const getDistance = (touches) => {
+    return Math.hypot(
+      touches[0].pageX - touches[1].pageX,
+      touches[0].pageY - touches[1].pageY
+    );
+  };
 
   // RESET ZOOM WHEN LIGHTBOX CLOSES
   useEffect(() => {
@@ -441,21 +449,35 @@ export default function App() {
   }, [searchTerm, workshops]);
 
   // ZOOM / PAN LOGIC
-  const handleStart = (clientX, clientY) => {
-    setIsDragging(true);
-    setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+  const handleStart = (clientX, clientY, touches) => {
+    if (touches && touches.length === 2) {
+      setInitialDistance(getDistance(touches));
+    } else {
+      setIsDragging(true);
+      setDragStart({ x: clientX - offset.x, y: clientY - offset.y });
+    }
   };
 
-  const handleMove = (clientX, clientY) => {
-    if (!isDragging) return;
-    setOffset({ x: clientX - dragStart.x, y: clientY - dragStart.y });
+  const handleMove = (clientX, clientY, touches) => {
+    if (touches && touches.length === 2 && initialDistance) {
+      const currentDistance = getDistance(touches);
+      const ratio = currentDistance / initialDistance;
+      const newZoom = Math.min(Math.max(1, zoom * ratio), 5);
+      setZoom(newZoom);
+      setInitialDistance(currentDistance);
+    } else if (isDragging) {
+      setOffset({ x: clientX - dragStart.x, y: clientY - dragStart.y });
+    }
   };
 
-  const handleEnd = () => setIsDragging(false);
+  const handleEnd = () => {
+    setIsDragging(false);
+    setInitialDistance(null);
+  };
 
   const handleWheel = (e) => {
     e.preventDefault();
-    const delta = e.deltaY * -0.01;
+    const delta = e.deltaY * -0.005;
     const newZoom = Math.min(Math.max(1, zoom + delta), 5);
     setZoom(newZoom);
   };
@@ -496,14 +518,26 @@ export default function App() {
             onMouseMove={(e) => handleMove(e.clientX, e.clientY)}
             onMouseUp={handleEnd}
             onMouseLeave={handleEnd}
-            onTouchStart={(e) => handleStart(e.touches[0].clientX, e.touches[0].clientY)}
-            onTouchMove={(e) => handleMove(e.touches[0].clientX, e.touches[0].clientY)}
+            onTouchStart={(e) => {
+              if (e.touches.length === 2) {
+                handleStart(null, null, e.touches);
+              } else {
+                handleStart(e.touches[0].clientX, e.touches[0].clientY);
+              }
+            }}
+            onTouchMove={(e) => {
+              if (e.touches.length === 2) {
+                handleMove(null, null, e.touches);
+              } else {
+                handleMove(e.touches[0].clientX, e.touches[0].clientY);
+              }
+            }}
             onTouchEnd={handleEnd}
           >
             <div 
               style={{
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
-                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                transition: isDragging || initialDistance ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)'
               }}
               className="max-w-full max-h-full"
             >
