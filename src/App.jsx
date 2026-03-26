@@ -13,7 +13,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
-const NOTIFICATION_VERSION = 'v1'; // Change this (e.g., 'v2') to reset unread counts for everyone
+const NOTIFICATION_VERSION = 'v2'; // Incremented to v2 to refresh unread counts for all users
 
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
@@ -395,7 +395,7 @@ export default function App() {
             author: u.author || u.postedby || u.name || 'Team',
             image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
             timestamp: rawTs,
-            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 1 // Use 1 to ensure u.ms > 0 on first login
+            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 1 // Ensure count reflects presence
           };
         });
         setUpdates(mappedUpdates.reverse());
@@ -420,7 +420,6 @@ export default function App() {
   // Unread logic: compare updates to lastSeenUpdates
   const unreadCount = useMemo(() => {
     const count = updates.filter(u => u.ms > lastSeenUpdates).length;
-    // Don't zero it out immediately if we just clicked the tab; let the state sync happen
     return count;
   }, [updates, lastSeenUpdates]);
 
@@ -633,7 +632,6 @@ export default function App() {
                   ) : (
                     <>
                       <div className="pt-4 pb-2"><h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1><p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p></div>
-                      
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4 text-left">
                         <h2 className="text-2xl font-extrabold mb-2">Sign In</h2>
                         <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
@@ -643,7 +641,6 @@ export default function App() {
                           <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
                         </form>
                       </div>
-
                       <div className="bg-[#4563AD]/5 p-8 md:p-10 rounded-[3rem] border border-[#4563AD]/20 text-center overflow-hidden relative group">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-[#4563AD]/5 rounded-bl-full -z-0"></div>
                         <div className="relative z-10">
@@ -653,7 +650,6 @@ export default function App() {
                           <button onClick={openBrushfire} className="w-full bg-[#4563AD] text-white font-extrabold py-5 rounded-2xl shadow-lg hover:bg-[#4563AD]/90 transition-all active:scale-95">Get Tickets</button>
                         </div>
                       </div>
-
                       <div className="grid grid-cols-1 gap-4 text-left"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
@@ -664,12 +660,7 @@ export default function App() {
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left text-gray-900">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
-                
-                {/* Site Map Interactive Card */}
-                <div 
-                  onClick={() => setSelectedImage(LINKS.siteMapImage)}
-                  className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all"
-                >
+                <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                   <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
                     <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -681,7 +672,6 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-
                 <div className="space-y-8">
                   {VENUE_MAP.map((location, idx) => {
                     const VenueIcon = location.icon;
@@ -692,17 +682,10 @@ export default function App() {
                           <div className="flex-1">
                             <h3 className="text-xl font-extrabold">{location.zone}</h3>
                             <a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{location.address}<ExternalLink size={12} className="text-gray-300" /></a>
-                            
                             {location.levelMaps && (
                               <div className="mt-4 flex flex-wrap gap-2">
                                 {location.levelMaps.map((lvl, lIdx) => (
-                                  <button 
-                                    key={lIdx} 
-                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }}
-                                    className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
-                                  >
-                                    <Maximize2 size={12} /> {lvl.label}
-                                  </button>
+                                  <button key={lIdx} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }} className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"><Maximize2 size={12} /> {lvl.label}</button>
                                 ))}
                               </div>
                             )}
