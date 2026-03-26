@@ -142,7 +142,7 @@ function NavItem({ icon: Icon, label, isActive, onClick, badge = 0 }) {
       <div className={`p-1.5 rounded-xl transition-all relative ${isActive ? 'bg-[#4563AD]/10' : ''}`}>
         <Icon size={22} />
         {badge > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white ring-2 ring-[#FCF5EB] animate-in zoom-in">
+          <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white ring-2 ring-[#FCF5EB] animate-pulse">
             {badge > 9 ? '9+' : badge}
           </span>
         )}
@@ -243,7 +243,7 @@ function WorkshopDetailView({ workshop, onBack }) {
                    {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" /> : workshop.speaker?.charAt(0)}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-extrabold text-gray-900 text-base leading-tight">{String(workshop.speaker || '')}</h4>
+                  <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
                   <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
                 </div>
               </div>
@@ -257,7 +257,7 @@ function WorkshopDetailView({ workshop, onBack }) {
 
 export default function App() {
   const [conferenceUser, setConferenceUser] = useState(null); 
-  const [activeTab, setActiveTab] = useState('my-wish'); // Default to landing screen so badge is visible
+  const [activeTab, setActiveTab] = useState('my-wish'); // Landing on itinerary so badge is visible
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -298,22 +298,29 @@ export default function App() {
   }, []);
 
   const openBrushfire = () => {
-    if (window.brushfire) window.brushfire("open", {widgetId: "cdc858de-c50e-490f-a764-212bc3848421"});
-    else window.open(LINKS.brushfireFallback, '_blank');
+    if (window.brushfire) {
+      window.brushfire("open", {widgetId: "cdc858de-c50e-490f-a764-212bc3848421"});
+    } else {
+      window.open(LINKS.brushfireFallback, '_blank');
+    }
   };
 
   const processUser = useCallback(async (u, emailStr) => {
     const fKey = Object.keys(u).find(k => k.includes('first'));
     const lKey = Object.keys(u).find(k => k.includes('last'));
-    setConferenceUser({ name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], email: emailStr, workshops: u });
+    setConferenceUser({ 
+      name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], 
+      email: emailStr, 
+      workshops: u 
+    });
     setMatchingUsers([]);
     setActiveTab('my-wish');
-    const user = auth.currentUser;
-    if (user) {
-      try {
+    try {
+      const user = auth.currentUser;
+      if (user) {
         await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'), { email: emailStr, updatedAt: new Date().toISOString(), notifVersion: NOTIFICATION_VERSION }, { merge: true });
-      } catch (err) { console.error(err); }
-    }
+      }
+    } catch (err) { console.error(err); }
   }, []);
 
   const handleLogin = async (e) => {
@@ -336,7 +343,9 @@ export default function App() {
   };
 
   useEffect(() => {
-    const initAuth = async () => { try { await signInAnonymously(auth); } catch (err) { setIsSessionRestored(true); } };
+    const initAuth = async () => {
+      try { await signInAnonymously(auth); } catch (err) { setIsSessionRestored(true); }
+    };
     initAuth();
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -344,7 +353,7 @@ export default function App() {
           const snap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'));
           if (snap.exists()) {
             const data = snap.data();
-            // If saved version is different, treat as never seen (reset unread count)
+            // Reset logic for badge versioning
             if (data.notifVersion === NOTIFICATION_VERSION && data.lastSeenUpdates) {
               setLastSeenUpdates(data.lastSeenUpdates);
             }
@@ -377,16 +386,20 @@ export default function App() {
         
         const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
         const rawUpdates = parseCSV(await updatesRes.text());
-        const mappedUpdates = rawUpdates.map(u => ({
+        const mappedUpdates = rawUpdates.map(u => {
+          const rawTs = u.timestamp || '';
+          const parsedDate = new Date(rawTs);
+          return {
             title: u.title || u.updatetitle || u.heading || '',
             body: u.body || u.message || u.updatemessage || '',
             author: u.author || u.postedby || u.name || 'Team',
             image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
-            timestamp: u.timestamp || '',
-            ms: !isNaN(new Date(u.timestamp).getTime()) ? new Date(u.timestamp).getTime() : 0
-        }));
+            timestamp: rawTs,
+            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 1 // Use 1 to ensure u.ms > 0 on first login
+          };
+        });
         setUpdates(mappedUpdates.reverse());
-      } catch (err) { console.error(err); }
+      } catch (err) { console.error("Feed load error", err); }
       setIsDataLoaded(true);
     };
     fetchData();
@@ -404,10 +417,12 @@ export default function App() {
     }
   }, [activeTab, updates, lastSeenUpdates]);
 
+  // Unread logic: compare updates to lastSeenUpdates
   const unreadCount = useMemo(() => {
     const count = updates.filter(u => u.ms > lastSeenUpdates).length;
-    return (activeTab === 'updates' && count === 0) ? 0 : count;
-  }, [updates, lastSeenUpdates, activeTab]);
+    // Don't zero it out immediately if we just clicked the tab; let the state sync happen
+    return count;
+  }, [updates, lastSeenUpdates]);
 
   const handleSlotClick = (ev) => {
     if (ev.type !== 'workshop_slot') return;
@@ -449,7 +464,9 @@ export default function App() {
     }
   };
 
-  if (!isDataLoaded || !isSessionRestored) return (
+  const isSyncing = !isDataLoaded || !isSessionRestored;
+
+  if (isSyncing) return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center p-10 text-center text-gray-900">
       <Loader2 className="animate-spin text-[#ED4E23] mb-4" size={48} />
       <h2 className="text-xl font-extrabold font-serif">Loading WISH Experience...</h2>
@@ -484,14 +501,21 @@ export default function App() {
         <div className="fixed inset-0 z-[100] bg-[#FCF5EB]/95 backdrop-blur-md flex flex-col animate-in slide-in-from-bottom-8 duration-300">
           <div className="w-full max-w-2xl mx-auto flex flex-col h-full px-6 text-left">
             <div className="py-6 flex items-center justify-between border-b border-[#E8BA21]/20">
-              <div className="flex flex-col"><span className="text-[10px] font-black text-[#ED4E23] uppercase tracking-widest">{selectedSlot.dayAbbr} • {selectedSlot.time}</span><h2 className="text-2xl font-extrabold font-serif">{selectedSlot.title}</h2></div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-[#ED4E23] uppercase tracking-widest">{selectedSlot.dayAbbr} • {selectedSlot.time}</span>
+                <h2 className="text-2xl font-extrabold font-serif">{selectedSlot.title}</h2>
+              </div>
               <button onClick={() => setSelectedSlot(null)} className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
             </div>
             <div className="flex-1 overflow-y-auto py-8 space-y-4 pb-12">
               {selectedSlot.matches.length === 0 && <div className="text-center py-20 text-gray-400 italic">No workshops found for this time slot.</div>}
               {selectedSlot.matches.map(w => (
-                <div key={w.id} onClick={() => { setSelectedWorkshopId(w.id); setSelectedSlot(null); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group">
-                  <div className="flex-1 min-w-0 pr-4"><h3 className="font-extrabold text-lg leading-tight group-hover:text-[#4563AD] transition-colors">{w.title}</h3><p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{w.speaker}</p><div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400"><MapPin size={10} className="text-[#E8BA21]/50" />{w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}</div></div>
+                <div key={`slot-item-${w.id}`} onClick={() => { setSelectedWorkshopId(w.id); setSelectedSlot(null); }} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex items-center justify-between group">
+                  <div className="flex-1 min-w-0 pr-4">
+                    <h3 className="font-extrabold text-lg leading-tight group-hover:text-[#4563AD] transition-colors">{w.title}</h3>
+                    <p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-1">{w.speaker}</p>
+                    <div className="mt-2 flex items-center gap-1.5 text-[9px] font-bold uppercase text-gray-400"><MapPin size={10} className="text-[#E8BA21]/50" />{w.sessions?.find(s => s.day === selectedSlot.dayAbbr && s.time === selectedSlot.time)?.room || 'TBA'}</div>
+                  </div>
                   <ChevronRight size={20} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors" />
                 </div>
               ))}
@@ -522,7 +546,11 @@ export default function App() {
                   {updates.length === 0 && <div className="text-center py-20 text-gray-400 italic">No updates yet. Check back during the conference!</div>}
                   {updates.map((post, idx) => (
                     <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden flex items-start gap-4 p-5 animate-in slide-in-from-bottom-4">
-                      <div className="flex-1 min-w-0"><h3 className="text-lg font-extrabold mb-1 leading-tight">{post.title}</h3><p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{post.body}</p><div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {post.author}</div></div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-extrabold mb-1 leading-tight">{post.title}</h3>
+                        <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{post.body}</p>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {post.author}</div>
+                      </div>
                       {post.image && (
                         <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" onClick={() => setSelectedImage(post.image)}>
                           <img src={getDirectDriveLink(post.image)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Post" onError={(e) => e.target.style.display = 'none'} />
@@ -563,7 +591,7 @@ export default function App() {
                   {filteredWorkshops.map(w => (
                     <div key={w.id} onClick={() => setSelectedWorkshopId(w.id)} className="bg-white p-6 rounded-[2rem] shadow-sm border border-transparent hover:border-[#E8BA21]/30 cursor-pointer transition-all flex flex-col group">
                       <div className="flex items-start justify-between gap-4"><div className="flex-1 min-w-0"><h3 className="font-extrabold text-xl leading-tight">{w.title}</h3><p className="text-[#ED4E23] text-[10px] font-black uppercase tracking-widest mt-0.5">{w.speaker}</p></div><ChevronRight size={18} className="text-gray-300 group-hover:text-[#ED4E23] transition-colors mt-1" /></div>
-                      {w.sessions && w.sessions.length > 0 && <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">{w.sessions.map((s, idx) => (<div key={idx} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit"><div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter"><Clock size={10} className="text-gray-400" />{s.day} {s.time}</div><div className="w-px h-2 bg-gray-200" /><div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter"><MapPin size={10} className="opacity-50" />{session.room}</div></div>))}</div>}
+                      {w.sessions && w.sessions.length > 0 && <div className="mt-4 flex flex-col gap-2 border-t border-gray-50 pt-4">{w.sessions.map((session, sIdx) => (<div key={sIdx} className="flex items-center gap-3 bg-gray-50/80 px-3 py-1.5 rounded-xl border border-gray-100/50 w-fit"><div className="flex items-center gap-1 text-[9px] font-bold text-gray-500 uppercase tracking-tighter"><Clock size={10} className="text-gray-400" />{session.day} {session.time}</div><div className="w-px h-2 bg-gray-200" /><div className="flex items-center gap-1 text-[9px] font-bold text-[#4563AD] uppercase tracking-tighter"><MapPin size={10} className="opacity-50" />{session.room}</div></div>))}</div>}
                     </div>
                   ))}
                 </div>
@@ -605,6 +633,7 @@ export default function App() {
                   ) : (
                     <>
                       <div className="pt-4 pb-2"><h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1><p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p></div>
+                      
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4 text-left">
                         <h2 className="text-2xl font-extrabold mb-2">Sign In</h2>
                         <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
@@ -614,6 +643,7 @@ export default function App() {
                           <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
                         </form>
                       </div>
+
                       <div className="bg-[#4563AD]/5 p-8 md:p-10 rounded-[3rem] border border-[#4563AD]/20 text-center overflow-hidden relative group">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-[#4563AD]/5 rounded-bl-full -z-0"></div>
                         <div className="relative z-10">
@@ -623,6 +653,7 @@ export default function App() {
                           <button onClick={openBrushfire} className="w-full bg-[#4563AD] text-white font-extrabold py-5 rounded-2xl shadow-lg hover:bg-[#4563AD]/90 transition-all active:scale-95">Get Tickets</button>
                         </div>
                       </div>
+
                       <div className="grid grid-cols-1 gap-4 text-left"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
@@ -633,16 +664,61 @@ export default function App() {
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left text-gray-900">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
-                <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                
+                {/* Site Map Interactive Card */}
+                <div 
+                  onClick={() => setSelectedImage(LINKS.siteMapImage)}
+                  className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all"
+                >
                   <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
                     <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" />
                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <div className="bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in zoom-in duration-300"><MapPinSquare className="text-[#4563AD]" size={24} /><span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-widest">Lexton Road Map</span><Maximize2 size={16} className="text-gray-400" /></div>
+                      <div className="bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in zoom-in duration-300">
+                        <MapPinSquare className="text-[#4563AD]" size={24} />
+                        <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-widest">Lexton Road Map</span>
+                        <Maximize2 size={16} className="text-gray-400" />
+                      </div>
                     </div>
                   </div>
                 </div>
+
                 <div className="space-y-8">
-                  {VENUE_MAP.map((location, idx) => (<div key={idx} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}><div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40"><div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><location.icon size={22} /></div><div className="flex-1"><h3 className="text-xl font-extrabold">{location.zone}</h3><a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{location.address}<ExternalLink size={12} className="text-gray-300" /></a>{location.levelMaps && <div className="mt-4 flex flex-wrap gap-2">{location.levelMaps.map((lvl, lIdx) => (<button key={lIdx} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }} className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"><Maximize2 size={12} /> {lvl.label}</button>))}</div>}</div></div><div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">{location.rooms.map((room, rIdx) => (<div key={rIdx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 transition-all"><span className="text-sm font-bold text-gray-700">{room.name}</span><span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{room.note}</span></div>))}</div></div>))}
+                  {VENUE_MAP.map((location, idx) => {
+                    const VenueIcon = location.icon;
+                    return (
+                      <div key={idx} className="bg-white rounded-[3rem] border border-gray-100 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4" style={{animationDelay: `${idx*100}ms`}}>
+                        <div className="p-8 flex items-start gap-5 border-b border-gray-50 bg-gray-50/40">
+                          <div className="w-12 h-12 rounded-2xl bg-[#4563AD]/10 flex items-center justify-center text-[#4563AD] shrink-0 shadow-inner"><VenueIcon size={22} /></div>
+                          <div className="flex-1">
+                            <h3 className="text-xl font-extrabold">{location.zone}</h3>
+                            <a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{location.address}<ExternalLink size={12} className="text-gray-300" /></a>
+                            
+                            {location.levelMaps && (
+                              <div className="mt-4 flex flex-wrap gap-2">
+                                {location.levelMaps.map((lvl, lIdx) => (
+                                  <button 
+                                    key={lIdx} 
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }}
+                                    className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                                  >
+                                    <Maximize2 size={12} /> {lvl.label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                          {location.rooms.map((room, rIdx) => (
+                            <div key={rIdx} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 transition-all">
+                              <span className="text-sm font-bold text-gray-700">{room.name}</span>
+                              <span className="text-[10px] uppercase font-extrabold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">{room.note}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
