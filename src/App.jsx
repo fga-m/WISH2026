@@ -4,7 +4,8 @@ import {
   Search, User, ChevronLeft, AlertCircle, ChevronRight, 
   Sparkles, Calendar, Building2, DoorOpen, 
   Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
-  Maximize2, Eye, Ticket, Map as MapPinSquare, Plus, Minus, RefreshCcw
+  Maximize2, Eye, Ticket, Map as MapPinSquare, Plus, Minus, RefreshCcw,
+  Users, LogOut
 } from 'lucide-react';
 
 // Firebase Imports
@@ -13,7 +14,7 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // --- CONFIGURATION ---
-const NOTIFICATION_VERSION = 'v2'; // Incremented to v2 to refresh unread counts for all users
+const NOTIFICATION_VERSION = 'v2'; 
 
 const LINKS = {
   itineraries: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSdrkmNrEGx_JOuGw--AI5ywWAVwwzjEtv6K-molR-cB21R0J8poWUdnsvUlSLwI3MBzi5-jrGeOUh5/pub?output=csv",
@@ -257,10 +258,11 @@ function WorkshopDetailView({ workshop, onBack }) {
 
 export default function App() {
   const [conferenceUser, setConferenceUser] = useState(null); 
-  const [activeTab, setActiveTab] = useState('my-wish'); // Landing on itinerary so badge is visible
+  const [activeTab, setActiveTab] = useState('my-wish'); 
   const [selectedWorkshopId, setSelectedWorkshopId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [email, setEmail] = useState('');
   
   // Interactive Image State
@@ -305,20 +307,34 @@ export default function App() {
     }
   };
 
-  const processUser = useCallback(async (u, emailStr) => {
+  const processUser = useCallback(async (u, emailStr, allPeers = []) => {
     const fKey = Object.keys(u).find(k => k.includes('first'));
     const lKey = Object.keys(u).find(k => k.includes('last'));
+    const userName = `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0];
+    
     setConferenceUser({ 
-      name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() || emailStr.split('@')[0], 
+      name: userName, 
       email: emailStr, 
       workshops: u 
     });
-    setMatchingUsers([]);
+    
+    // Store matching users for the switcher menu
+    if (allPeers.length > 0) {
+      setMatchingUsers(allPeers);
+    }
+    
+    setIsUserMenuOpen(false);
     setActiveTab('my-wish');
+    
     try {
       const user = auth.currentUser;
       if (user) {
-        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'), { email: emailStr, updatedAt: new Date().toISOString(), notifVersion: NOTIFICATION_VERSION }, { merge: true });
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'), { 
+          email: emailStr, 
+          selectedUser: userName,
+          updatedAt: new Date().toISOString(), 
+          notifVersion: NOTIFICATION_VERSION 
+        }, { merge: true });
       }
     } catch (err) { console.error(err); }
   }, []);
@@ -335,9 +351,14 @@ export default function App() {
       const rawData = parseCSV(csv);
       const emailStr = email.trim().toLowerCase();
       const users = rawData.filter(row => Object.values(row).some(val => String(val).toLowerCase().trim() === emailStr));
-      if (users.length === 1) await processUser(users[0], emailStr);
-      else if (users.length > 1) setMatchingUsers(users);
-      else setError(`"${emailStr}" not found in registration list.`);
+      
+      if (users.length === 1) {
+        await processUser(users[0], emailStr, users);
+      } else if (users.length > 1) {
+        setMatchingUsers(users);
+      } else {
+        setError(`"${emailStr}" not found in registration list.`);
+      }
     } catch (e) { setError("Error connecting to registry."); }
     finally { setIsLoadingUser(false); }
   };
@@ -353,7 +374,6 @@ export default function App() {
           const snap = await getDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'));
           if (snap.exists()) {
             const data = snap.data();
-            // Reset logic for badge versioning
             if (data.notifVersion === NOTIFICATION_VERSION && data.lastSeenUpdates) {
               setLastSeenUpdates(data.lastSeenUpdates);
             }
@@ -361,11 +381,20 @@ export default function App() {
                setEmail(data.email);
                const res = await fetch(`${LINKS.itineraries}`, { cache: "no-store" });
                const rawData = parseCSV(await res.text());
-               const u = rawData.find(row => Object.values(row).some(v => String(v).toLowerCase().trim() === data.email));
-               if (u) {
-                 const fKey = Object.keys(u).find(k => k.includes('first'));
-                 const lKey = Object.keys(u).find(k => k.includes('last'));
-                 setConferenceUser({ name: `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim(), email: data.email, workshops: u });
+               const users = rawData.filter(row => Object.values(row).some(v => String(v).toLowerCase().trim() === data.email));
+               
+               if (users.length > 0) {
+                 // Try to find the specific last-selected user, otherwise default to first
+                 let selected = users[0];
+                 if (data.selectedUser) {
+                    const match = users.find(u => {
+                      const fKey = Object.keys(u).find(k => k.includes('first'));
+                      const lKey = Object.keys(u).find(k => k.includes('last'));
+                      return `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim() === data.selectedUser;
+                    });
+                    if (match) selected = match;
+                 }
+                 processUser(selected, data.email, users);
                }
             }
           }
@@ -388,14 +417,13 @@ export default function App() {
         const rawUpdates = parseCSV(await updatesRes.text());
         const mappedUpdates = rawUpdates.map(u => {
           const rawTs = u.timestamp || '';
-          const parsedDate = new Date(rawTs);
           return {
             title: u.title || u.updatetitle || u.heading || '',
             body: u.body || u.message || u.updatemessage || '',
             author: u.author || u.postedby || u.name || 'Team',
             image: u.image || u.imageurl || u.photo || u.uploadimage || u.photoupload || '',
             timestamp: rawTs,
-            ms: !isNaN(parsedDate.getTime()) ? parsedDate.getTime() : 1 // Ensure count reflects presence
+            ms: !isNaN(new Date(rawTs).getTime()) ? new Date(rawTs).getTime() : 1
           };
         });
         setUpdates(mappedUpdates.reverse());
@@ -417,11 +445,7 @@ export default function App() {
     }
   }, [activeTab, updates, lastSeenUpdates]);
 
-  // Unread logic: compare updates to lastSeenUpdates
-  const unreadCount = useMemo(() => {
-    const count = updates.filter(u => u.ms > lastSeenUpdates).length;
-    return count;
-  }, [updates, lastSeenUpdates]);
+  const unreadCount = useMemo(() => updates.filter(u => u.ms > lastSeenUpdates).length, [updates, lastSeenUpdates]);
 
   const handleSlotClick = (ev) => {
     if (ev.type !== 'workshop_slot') return;
@@ -445,7 +469,6 @@ export default function App() {
     return term ? baseList.filter(w => String(w.title).toLowerCase().includes(term) || String(w.speaker).toLowerCase().includes(term)) : baseList;
   }, [searchTerm, workshops]);
 
-  // ZOOM / PAN LOGIC
   const handleStart = (clientX, clientY, touches) => {
     if (touches && touches.length === 2) setInitialDistance(getDistance(touches));
     else { setIsDragging(true); setDragStart({ x: clientX - offset.x, y: clientY - offset.y }); }
@@ -463,9 +486,19 @@ export default function App() {
     }
   };
 
-  const isSyncing = !isDataLoaded || !isSessionRestored;
+  const handleLogout = async () => {
+    setConferenceUser(null);
+    setMatchingUsers([]);
+    setIsUserMenuOpen(false);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'session', 'current'), { email: null, selectedUser: null }, { merge: true });
+      }
+    } catch (e) {}
+  };
 
-  if (isSyncing) return (
+  if (!isDataLoaded || !isSessionRestored) return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center p-10 text-center text-gray-900">
       <Loader2 className="animate-spin text-[#ED4E23] mb-4" size={48} />
       <h2 className="text-xl font-extrabold font-serif">Loading WISH Experience...</h2>
@@ -474,6 +507,50 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col font-sans text-gray-900 selection:bg-[#E8BA21]/30 text-left overflow-hidden">
+      
+      {/* Profile Switcher Menu */}
+      {isUserMenuOpen && (
+        <div className="fixed inset-0 z-[100] bg-[#FCF5EB]/95 backdrop-blur-md flex flex-col animate-in slide-in-from-bottom-8 duration-300">
+          <div className="w-full max-w-2xl mx-auto flex flex-col h-full px-6">
+            <div className="py-6 flex items-center justify-between border-b border-[#E8BA21]/20">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-[#ED4E23] uppercase tracking-widest">Logged in as {conferenceUser?.email}</span>
+                <h2 className="text-2xl font-extrabold font-serif">Profiles</h2>
+              </div>
+              <button onClick={() => setIsUserMenuOpen(false)} className="p-3 bg-white rounded-2xl shadow-sm border border-gray-100 text-gray-400 hover:text-gray-900 transition-colors"><X size={24} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto py-8 space-y-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest px-2">Switch User</p>
+              {matchingUsers.map((u, i) => {
+                const fKey = Object.keys(u).find(k => k.includes('first'));
+                const lKey = Object.keys(u).find(k => k.includes('last'));
+                const name = `${String(u[fKey] || '')} ${String(u[lKey] || '')}`.trim();
+                const isActive = conferenceUser?.name === name;
+                
+                return (
+                  <button 
+                    key={i} 
+                    onClick={() => processUser(u, conferenceUser.email, matchingUsers)} 
+                    className={`w-full p-6 rounded-[2rem] flex items-center justify-between transition-all border ${isActive ? 'bg-[#4563AD] border-[#4563AD] text-white shadow-lg' : 'bg-white border-gray-100 text-gray-800 shadow-sm hover:border-[#E8BA21]/40'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${isActive ? 'bg-white/20' : 'bg-[#FCF5EB] text-[#4563AD]'}`}>{name.charAt(0)}</div>
+                      <span className="font-extrabold text-lg">{name}</span>
+                    </div>
+                    {isActive ? <CheckCircle2 size={24} /> : <ChevronRight size={20} className="text-gray-300" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="py-8 border-t border-[#E8BA21]/20">
+              <button onClick={handleLogout} className="w-full p-6 bg-red-50 text-red-500 rounded-[2rem] flex items-center justify-center gap-3 font-extrabold text-lg hover:bg-red-100 transition-colors">
+                <LogOut size={20} /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Interactive Zoomable Lightbox */}
       {selectedImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200 overflow-hidden touch-none" onWheel={(e) => setZoom(Math.min(Math.max(1, zoom + e.deltaY * -0.005), 5))}>
@@ -489,7 +566,7 @@ export default function App() {
           </div>
           <div className="w-full h-full flex items-center justify-center cursor-grab active:cursor-grabbing" onMouseDown={(e) => handleStart(e.clientX, e.clientY)} onMouseMove={(e) => handleMove(e.clientX, e.clientY)} onMouseUp={() => { setIsDragging(false); setInitialDistance(null); }} onMouseLeave={() => { setIsDragging(false); setInitialDistance(null); }} onTouchStart={(e) => e.touches.length === 2 ? handleStart(null, null, e.touches) : handleStart(e.touches[0].clientX, e.touches[0].clientY)} onTouchMove={(e) => e.touches.length === 2 ? handleMove(null, null, e.touches) : handleMove(e.touches[0].clientX, e.touches[0].clientY)} onTouchEnd={() => { setIsDragging(false); setInitialDistance(null); }}>
             <div style={{ transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`, transition: isDragging || initialDistance ? 'none' : 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' }} className="max-w-full max-h-full">
-              <img src={getDirectDriveLink(selectedImage)} className="max-w-full max-h-full object-contain shadow-2xl rounded-sm" alt="Map" draggable={false} onDoubleClick={() => zoom > 1 ? (setZoom(1), setOffset({x:0,y:0})) : setZoom(2.5)} />
+              <img src={getDirectDriveLink(selectedImage)} className="max-w-full max-h-full object-contain shadow-2xl rounded-sm" alt="View" draggable={false} onDoubleClick={() => zoom > 1 ? (setZoom(1), setOffset({x:0,y:0})) : setZoom(2.5)} />
             </div>
           </div>
           <div className="absolute bottom-10 bg-black/40 backdrop-blur-md px-6 py-3 rounded-full border border-white/10 text-white/50 text-[10px] font-bold uppercase tracking-widest pointer-events-none">{zoom > 1 ? "Drag to move • Double-tap to reset" : "Pinch or scroll to zoom"}</div>
@@ -529,7 +606,19 @@ export default function App() {
             {LINKS.logo ? <img src={getDirectDriveLink(LINKS.logo)} alt="Logo" className={`h-12 w-auto object-contain transition-opacity duration-300 ${logoLoaded ? 'opacity-100' : 'opacity-0 absolute'}`} onLoad={() => setLogoLoaded(true)} onError={() => setLogoLoaded(false)} /> : null}
             {!logoLoaded && <div className="w-10 h-10 bg-[#ED4E23] rounded-xl flex items-center justify-center text-white font-black text-2xl shadow-sm">W</div>}
           </div>
-          {conferenceUser && <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center border border-gray-100 font-bold text-sm text-[#4563AD] uppercase shadow-sm">{conferenceUser.name.charAt(0)}</div>}
+          {conferenceUser && (
+            <button 
+              onClick={() => setIsUserMenuOpen(true)}
+              className="w-10 h-10 bg-white rounded-2xl flex items-center justify-center border border-gray-100 font-black text-sm text-[#4563AD] uppercase shadow-sm active:scale-95 transition-all relative group"
+            >
+              {conferenceUser.name.charAt(0)}
+              {matchingUsers.length > 1 && (
+                <div className="absolute -bottom-1 -right-1 bg-[#4563AD] text-white p-0.5 rounded-md border-2 border-[#FCF5EB]">
+                  <Users size={10} />
+                </div>
+              )}
+            </button>
+          )}
         </div>
       </header>
 
@@ -600,7 +689,17 @@ export default function App() {
             {activeTab === 'my-wish' && (
               conferenceUser ? (
                 <div className="space-y-8 text-left animate-in fade-in text-gray-900">
-                  <div className="flex justify-between items-end"><div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2><p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p></div><button onClick={() => setConferenceUser(null)} className="text-[10px] font-bold text-gray-400 bg-white px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-widest hover:text-red-500 transition-colors">Logout</button></div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">My WISH</h2>
+                      <p className="text-xs text-gray-500 font-bold uppercase">Personal Itinerary</p>
+                    </div>
+                    {matchingUsers.length > 1 && (
+                      <button onClick={() => setIsUserMenuOpen(true)} className="text-[10px] font-bold text-[#4563AD] bg-[#4563AD]/5 px-3 py-1.5 rounded-lg border border-[#4563AD]/20 uppercase tracking-widest hover:bg-[#4563AD]/10 transition-colors flex items-center gap-2">
+                        <Users size={12} /> Switch Profile
+                      </button>
+                    )}
+                  </div>
                   <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                   <div className="space-y-6">
                     {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => {
@@ -628,10 +727,22 @@ export default function App() {
               ) : (
                 <div className="flex flex-col space-y-8 text-left animate-in fade-in text-gray-900">
                   {matchingUsers.length > 0 ? (
-                    <div className="pt-4"><button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button><h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2><div className="space-y-3 mt-6">{matchingUsers.map((u, i) => (<button key={i} onClick={() => processUser(u, email.trim().toLowerCase())} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between shadow-sm animate-in slide-in-from-right-4" style={{animationDelay: `${i*50}ms`}}><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || ''))}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>))}</div></div>
+                    <div className="pt-4">
+                      <button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button>
+                      <h2 className="text-3xl font-extrabold text-[#4563AD] mb-2 font-serif">Multiple People Found</h2>
+                      <div className="space-y-3 mt-6">
+                        {matchingUsers.map((u, i) => (
+                          <button key={i} onClick={() => processUser(u, email.trim().toLowerCase(), matchingUsers)} className="w-full p-6 bg-white border border-[#E8BA21]/30 rounded-[2rem] flex items-center justify-between shadow-sm hover:border-[#ED4E23] transition-all"><span className="font-extrabold text-gray-800 text-lg">{(String(u['namefirst'] || '') + ' ' + String(u['namelast'] || ''))}</span><ChevronRight size={20} className="text-[#E8BA21]" /></button>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
                     <>
-                      <div className="pt-4 pb-2"><h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1><p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p></div>
+                      <div className="pt-4 pb-2">
+                        <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
+                        <p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p>
+                      </div>
+                      
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4 text-left">
                         <h2 className="text-2xl font-extrabold mb-2">Sign In</h2>
                         <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
@@ -641,6 +752,7 @@ export default function App() {
                           <button type="submit" disabled={isLoadingUser} className="w-full bg-[#ED4E23] text-white font-extrabold py-5 rounded-2xl shadow-lg flex items-center justify-center gap-2 text-lg hover:bg-[#ED4E23]/90 transition-all active:scale-95">{isLoadingUser ? "Checking..." : "Access Schedule"}</button>
                         </form>
                       </div>
+
                       <div className="bg-[#4563AD]/5 p-8 md:p-10 rounded-[3rem] border border-[#4563AD]/20 text-center overflow-hidden relative group">
                         <div className="absolute top-0 right-0 w-24 h-24 bg-[#4563AD]/5 rounded-bl-full -z-0"></div>
                         <div className="relative z-10">
@@ -650,6 +762,7 @@ export default function App() {
                           <button onClick={openBrushfire} className="w-full bg-[#4563AD] text-white font-extrabold py-5 rounded-2xl shadow-lg hover:bg-[#4563AD]/90 transition-all active:scale-95">Get Tickets</button>
                         </div>
                       </div>
+
                       <div className="grid grid-cols-1 gap-4 text-left"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
@@ -660,6 +773,7 @@ export default function App() {
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left text-gray-900">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
+                
                 <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                   <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
                     <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" />
@@ -672,6 +786,7 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
                 <div className="space-y-8">
                   {VENUE_MAP.map((location, idx) => {
                     const VenueIcon = location.icon;
@@ -682,10 +797,17 @@ export default function App() {
                           <div className="flex-1">
                             <h3 className="text-xl font-extrabold">{location.zone}</h3>
                             <a href={location.mapUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-xs text-[#E8BA21] font-bold mt-1 hover:text-[#4563AD] transition-all">{location.address}<ExternalLink size={12} className="text-gray-300" /></a>
+                            
                             {location.levelMaps && (
                               <div className="mt-4 flex flex-wrap gap-2">
                                 {location.levelMaps.map((lvl, lIdx) => (
-                                  <button key={lIdx} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }} className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"><Maximize2 size={12} /> {lvl.label}</button>
+                                  <button 
+                                    key={lIdx} 
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedImage(lvl.url); }}
+                                    className="bg-white border border-[#4563AD]/20 hover:border-[#4563AD] text-[#4563AD] text-[10px] font-black uppercase px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+                                  >
+                                    <Maximize2 size={12} /> {lvl.label}
+                                  </button>
                                 ))}
                               </div>
                             )}
@@ -711,11 +833,11 @@ export default function App() {
 
       <nav className="fixed bottom-0 left-0 right-0 bg-[#FCF5EB]/95 backdrop-blur-xl border-t border-[#E8BA21]/20 z-50 h-20">
         <div className="max-w-2xl mx-auto h-20 flex justify-around items-center px-4">
-          <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
-          <NavItem icon={Bell} label="Updates" badge={unreadCount} isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
-          <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
-          <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
-          <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); setSelectedSlot(null); }} />
+          <NavItem icon={User} label="MY WISH" isActive={activeTab === 'my-wish'} onClick={() => { setActiveTab('my-wish'); setSelectedWorkshopId(null); setSelectedSlot(null); setIsUserMenuOpen(false); }} />
+          <NavItem icon={Bell} label="Updates" badge={unreadCount} isActive={activeTab === 'updates'} onClick={() => { setActiveTab('updates'); setSelectedWorkshopId(null); setSelectedSlot(null); setIsUserMenuOpen(false); }} />
+          <NavItem icon={CalendarDays} label="Schedule" isActive={activeTab === 'schedule'} onClick={() => { setActiveTab('schedule'); setSelectedWorkshopId(null); setSelectedSlot(null); setIsUserMenuOpen(false); }} />
+          <NavItem icon={BookOpen} label="Workshops" isActive={activeTab === 'workshops'} onClick={() => { setActiveTab('workshops'); setSelectedWorkshopId(null); setSelectedSlot(null); setIsUserMenuOpen(false); }} />
+          <NavItem icon={MapIcon} label="Venues" isActive={activeTab === 'map'} onClick={() => { setActiveTab('map'); setSelectedWorkshopId(null); setSelectedSlot(null); setIsUserMenuOpen(false); }} />
         </div>
       </nav>
     </div>
