@@ -780,7 +780,7 @@ export default function App() {
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
                           <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Carpark Map</span>
+                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Carkpark)</span>
                           <Maximize2 size={14} className="text-gray-400" />
                         </div>
                       </div>
@@ -792,7 +792,7 @@ export default function App() {
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
                           <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Classroom Map</span>
+                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Classrooms)</span>
                           <Maximize2 size={14} className="text-gray-400" />
                         </div>
                       </div>
