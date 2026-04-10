@@ -773,7 +773,16 @@ export default function App() {
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left text-gray-900">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
-                
+
+                <div className="flex flex-wrap gap-3">
+                  <a href="https://drive.google.com/uc?export=download&id=1yhNjcPq1aLd0AEZVQplHRIxtC5PzpAK3" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#4563AD]/30 rounded-xl text-sm font-semibold text-[#4563AD] shadow-sm hover:bg-[#4563AD]/5 active:scale-95 transition-all">
+                    <MapPin size={14} />Kids Carpark Map
+                  </a>
+                  <a href="https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#4563AD]/30 rounded-xl text-sm font-semibold text-[#4563AD] shadow-sm hover:bg-[#4563AD]/5 active:scale-95 transition-all">
+                    <MapPin size={14} />Kids Classroom Map
+                  </a>
+                </div>
+
                 <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                   <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
                     <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" />
