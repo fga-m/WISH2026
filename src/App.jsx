@@ -648,11 +648,18 @@ export default function App() {
 
             {activeTab === 'schedule' && (
               <div className="space-y-8 animate-in fade-in text-gray-900">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
-                  <a href="https://drive.google.com/file/d/1Kgla9CwoBcV70lDgADNqcY69-qdxdhHr/view?usp=drive_link" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-[#4563AD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-sm hover:bg-[#3a539b] transition-colors">
-                    KIDS Schedule
-                  </a>
+                <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                  <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
+                    <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="KIDS Schedule" loading="lazy" />
+                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                      <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
+                        <CalendarDays className="text-[#4563AD]" size={18} />
+                        <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">KIDS Schedule</span>
+                        <Maximize2 size={14} className="text-gray-400" />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                 <div className="space-y-6">
