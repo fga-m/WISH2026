@@ -650,9 +650,9 @@ export default function App() {
               <div className="space-y-8 animate-in fade-in text-gray-900">
                 <div className="flex items-center justify-between">
                   <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
-                  <button className="px-4 py-2 bg-[#4563AD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-sm hover:bg-[#3a539b] transition-colors">
+                  <a href="https://drive.google.com/file/d/1Kgla9CwoBcV70lDgADNqcY69-qdxdhHr/view?usp=drive_link" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-[#4563AD] text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-sm hover:bg-[#3a539b] transition-colors">
                     KIDS Schedule
-                  </button>
+                  </a>
                 </div>
                 <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                 <div className="space-y-6">
