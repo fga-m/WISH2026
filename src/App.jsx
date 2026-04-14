@@ -788,26 +788,26 @@ export default function App() {
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                     <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
                       <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Carpark Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
-                          <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Carpark)</span>
-                          <Maximize2 size={14} className="text-gray-400" />
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Kids Map (Carpark)</span>
+                          <Maximize2 size={10} className="text-gray-400" />
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                     <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
                       <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Classroom Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
-                          <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Classrooms)</span>
-                          <Maximize2 size={14} className="text-gray-400" />
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Kids Map (Classrooms)</span>
+                          <Maximize2 size={10} className="text-gray-400" />
                         </div>
                       </div>
                     </div>
@@ -815,26 +815,26 @@ export default function App() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                  <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                     <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
                       <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
-                          <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Lexton Road Map</span>
-                          <Maximize2 size={14} className="text-gray-400" />
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Lexton Road Map</span>
+                          <Maximize2 size={10} className="text-gray-400" />
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
                     <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
                       <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Lexton Parking Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
-                          <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Lexton Parking Map</span>
-                          <Maximize2 size={14} className="text-gray-400" />
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Lexton Parking Map</span>
+                          <Maximize2 size={10} className="text-gray-400" />
                         </div>
                       </div>
                     </div>
