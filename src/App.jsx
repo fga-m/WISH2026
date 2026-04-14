@@ -648,15 +648,17 @@ export default function App() {
 
             {activeTab === 'schedule' && (
               <div className="space-y-8 animate-in fade-in text-gray-900">
-                <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
-                <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
-                  <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
-                    <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="KIDS Schedule" loading="lazy" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
-                        <CalendarDays className="text-[#4563AD]" size={18} />
-                        <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">KIDS Schedule</span>
-                        <Maximize2 size={14} className="text-gray-400" />
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-1/2 bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all shrink-0">
+                    <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="KIDS Schedule" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <CalendarDays className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">KIDS Schedule</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
                       </div>
                     </div>
                   </div>
