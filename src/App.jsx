@@ -241,7 +241,7 @@ function WorkshopDetailView({ workshop, onBack }) {
               <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10 text-left">About the Speaker</h3>
               <div className="flex items-start gap-4 relative z-10 text-left">
                 <div className="w-20 h-20 rounded-2xl bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center overflow-hidden shadow-sm shrink-0 font-bold text-[#ED4E23] text-2xl uppercase">
-                   {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" /> : workshop.speaker?.charAt(0)}
+                   {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" loading="lazy" /> : workshop.speaker?.charAt(0)}
                 </div>
                 <div className="flex-1">
                   <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
@@ -288,20 +288,15 @@ export default function App() {
 
   useEffect(() => { if (!selectedImage) { setZoom(1); setOffset({ x: 0, y: 0 }); } }, [selectedImage]);
 
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = "https://widgetclient.brushfire.com/brushfire.min.js";
-    script.async = true;
-    document.head.appendChild(script);
-    return () => {
-      const existing = document.querySelector('script[src*="brushfire.min.js"]');
-      if (existing) document.head.removeChild(existing);
-    };
-  }, []);
-
   const openBrushfire = () => {
     if (window.brushfire) {
       window.brushfire("open", {widgetId: "cdc858de-c50e-490f-a764-212bc3848421"});
+    } else if (!document.querySelector('script[src*="brushfire.min.js"]')) {
+      const script = document.createElement('script');
+      script.src = "https://widgetclient.brushfire.com/brushfire.min.js";
+      script.async = true;
+      script.onload = () => window.brushfire?.("open", {widgetId: "cdc858de-c50e-490f-a764-212bc3848421"});
+      document.head.appendChild(script);
     } else {
       window.open(LINKS.brushfireFallback, '_blank');
     }
@@ -406,14 +401,14 @@ export default function App() {
   }, [processUser]);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = async (bustCache = false) => {
       try {
-        const timestamp = new Date().getTime();
-        const catalogRes = await fetch(`${LINKS.workshopCatalog}&t=${timestamp}`, { cache: "no-store" });
+        const suffix = bustCache ? `&t=${new Date().getTime()}` : '';
+        const catalogRes = await fetch(`${LINKS.workshopCatalog}${suffix}`);
         const catalogData = parseCSV(await catalogRes.text());
         setWorkshops(catalogData.map(row => ({ ...row, sessions: parseSessionString(String(row.sessions || '')) })).sort((a,b) => String(a.title || '').localeCompare(String(b.title || ''))));
-        
-        const updatesRes = await fetch(`${LINKS.updatesFeed}&t=${timestamp}`, { cache: "no-store" });
+
+        const updatesRes = await fetch(`${LINKS.updatesFeed}${suffix}`);
         const rawUpdates = parseCSV(await updatesRes.text());
         const mappedUpdates = rawUpdates.map(u => {
           const rawTs = u.timestamp || '';
@@ -430,8 +425,8 @@ export default function App() {
       } catch (err) { console.error("Feed load error", err); }
       setIsDataLoaded(true);
     };
-    fetchData();
-    const interval = setInterval(fetchData, 60000); 
+    fetchData(false);
+    const interval = setInterval(() => fetchData(true), 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -498,7 +493,7 @@ export default function App() {
     } catch (e) {}
   };
 
-  if (!isDataLoaded || !isSessionRestored) return (
+  if (!isSessionRestored) return (
     <div className="min-h-screen bg-[#FCF5EB] flex flex-col items-center justify-center p-10 text-center text-gray-900">
       <Loader2 className="animate-spin text-[#ED4E23] mb-4" size={48} />
       <h2 className="text-xl font-extrabold font-serif">Loading WISH Experience...</h2>
@@ -641,7 +636,7 @@ export default function App() {
                       </div>
                       {post.image && (
                         <div className="w-24 h-24 sm:w-28 sm:h-28 shrink-0 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer relative group" onClick={() => setSelectedImage(post.image)}>
-                          <img src={getDirectDriveLink(post.image)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Post" onError={(e) => e.target.style.display = 'none'} />
+                          <img src={getDirectDriveLink(post.image)} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" alt="Post" loading="lazy" onError={(e) => e.target.style.display = 'none'} />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 flex items-center justify-center transition-colors"><Maximize2 size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-md" /></div>
                         </div>
                       )}
@@ -653,7 +648,21 @@ export default function App() {
 
             {activeTab === 'schedule' && (
               <div className="space-y-8 animate-in fade-in text-gray-900">
-                <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-1/2 bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all shrink-0">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="KIDS Schedule" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <CalendarDays className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">KIDS Schedule</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                 <div className="space-y-6">
                   {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => (
@@ -674,6 +683,9 @@ export default function App() {
             {activeTab === 'workshops' && (
               <div className="space-y-8 text-left animate-in fade-in text-gray-900">
                 <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Workshops</h2>
+                {!isDataLoaded ? (
+                  <div className="grid gap-4">{[...Array(5)].map((_, i) => <div key={i} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 animate-pulse"><div className="h-5 bg-gray-100 rounded-lg w-3/4 mb-3" /><div className="h-3 bg-gray-100 rounded w-1/3" /></div>)}</div>
+                ) : (<>
                 <div className="relative group"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20}/><input type="text" placeholder="Search topics..." className="w-full pl-12 p-5 rounded-[2rem] border border-gray-100 bg-white outline-none focus:ring-4 focus:ring-[#4563AD]/5 shadow-sm font-medium" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} /></div>
                 <div className="grid gap-4">
                   {filteredWorkshops.map(w => (
@@ -683,6 +695,7 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+                </>)}
               </div>
             )}
 
@@ -773,15 +786,56 @@ export default function App() {
             {activeTab === 'map' && (
               <div className="animate-in fade-in space-y-10 text-left text-gray-900">
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
-                
-                <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
-                  <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
-                    <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <div className="bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in zoom-in duration-300">
-                        <MapPinSquare className="text-[#4563AD]" size={24} />
-                        <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-widest">Lexton Road Map</span>
-                        <Maximize2 size={16} className="text-gray-400" />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Carpark Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Kids Map (Carpark)</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Classroom Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Kids Map (Classrooms)</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Lexton Road Map</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Lexton Parking Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <MapPinSquare className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">Lexton Parking Map</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
                       </div>
                     </div>
                   </div>
