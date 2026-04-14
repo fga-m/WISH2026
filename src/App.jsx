@@ -648,7 +648,21 @@ export default function App() {
 
             {activeTab === 'schedule' && (
               <div className="space-y-8 animate-in fade-in text-gray-900">
-                <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                <div className="flex items-center justify-between gap-4">
+                  <h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif text-left">Schedule</h2>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-1/2 bg-white rounded-2xl border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all shrink-0">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1H6xyTv1jyIGzUF8uaV1Yqq04hFT7uRP4")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="KIDS Schedule" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur px-2 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5">
+                          <CalendarDays className="text-[#4563AD]" size={12} />
+                          <span className="font-extrabold text-[#4563AD] text-[9px] uppercase tracking-widest">KIDS Schedule</span>
+                          <Maximize2 size={10} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <DaySelector selectedDay={selectedDay} onDayChange={setSelectedDay} />
                 <div className="space-y-6">
                   {MASTER_SCHEDULE.find(d => d.date === selectedDay)?.events.map(ev => (
@@ -774,20 +788,20 @@ export default function App() {
                 <div><h2 className="text-4xl font-extrabold text-[#ED4E23] font-serif">Venues</h2></div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1yhNjcPq1aLd0AEZVQplHRIxtC5PzpAK3")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
-                    <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
-                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1yhNjcPq1aLd0AEZVQplHRIxtC5PzpAK3")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Carpark Map" loading="lazy" />
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1eWmIxuEgjfqwVDdz6DGgvJivggBVMwzl")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Carpark Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
                           <MapPinSquare className="text-[#4563AD]" size={18} />
-                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Carkpark)</span>
+                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Kids Map (Carpark)</span>
                           <Maximize2 size={14} className="text-gray-400" />
                         </div>
                       </div>
                     </div>
                   </div>
                   <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
-                    <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
                       <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1EmA7f7JUEP5MRfKfCBkQEi1hvD1s-_O0")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Kids Classroom Map" loading="lazy" />
                       <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
                         <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
@@ -800,14 +814,28 @@ export default function App() {
                   </div>
                 </div>
 
-                <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
-                  <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative">
-                    <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" loading="lazy" />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                      <div className="bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl flex items-center gap-3 animate-in zoom-in duration-300">
-                        <MapPinSquare className="text-[#4563AD]" size={24} />
-                        <span className="font-extrabold text-[#4563AD] text-sm uppercase tracking-widest">Lexton Road Map</span>
-                        <Maximize2 size={16} className="text-gray-400" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div onClick={() => setSelectedImage(LINKS.siteMapImage)} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink(LINKS.siteMapImage)} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Overview Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
+                          <MapPinSquare className="text-[#4563AD]" size={18} />
+                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Lexton Road Map</span>
+                          <Maximize2 size={14} className="text-gray-400" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div onClick={() => setSelectedImage("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="bg-white rounded-[3rem] border border-[#4563AD]/20 shadow-sm overflow-hidden cursor-pointer group relative active:scale-[0.98] transition-all">
+                    <div className="aspect-[16/5] w-full bg-gray-100 overflow-hidden relative">
+                      <img src={getDirectDriveLink("https://drive.google.com/uc?export=download&id=1seCj4hAI7qufxV4LD2wp6B-AH4GU_o5Y")} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Lexton Parking Map" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                        <div className="bg-white/90 backdrop-blur p-3 rounded-2xl shadow-xl flex items-center gap-2 animate-in zoom-in duration-300">
+                          <MapPinSquare className="text-[#4563AD]" size={18} />
+                          <span className="font-extrabold text-[#4563AD] text-xs uppercase tracking-widest">Lexton Parking Map</span>
+                          <Maximize2 size={14} className="text-gray-400" />
+                        </div>
                       </div>
                     </div>
                   </div>
