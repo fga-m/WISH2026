@@ -42,7 +42,7 @@ const appId = 'wish-2026-v1';
 
 const CONFERENCE_INFO = {
   dates: "Friday 17th — Sunday 19th April 2026",
-  tagline: "We are so excited to see how God moves this weekend! To help you prepare, you can check your workshop sign-ups here using your attendee email. Please keep in mind that any changes made after Thursday will not be reflected in this data.",
+  tagline: "We are so excited to see how God moves this weekend! To help you prepare, you can access your personalised workshop schedule here using your attendee email. Please keep in mind that any changes made after Thursday will not be reflected in this data.",
   address: "38 Lexton Road, Box Hill North, VIC 3129",
   locationName: "FGAM",
   googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129"
@@ -765,7 +765,6 @@ export default function App() {
 
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4 text-left">
                         <h2 className="text-2xl font-extrabold mb-2">Sign In</h2>
-                        <p className="text-sm text-gray-400 font-medium mb-8">Enter your registered email to access your personal itinerary.</p>
                         <form onSubmit={handleLogin} className="space-y-4">
                           <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" className="w-full p-5 rounded-2xl border border-gray-100 focus:ring-4 focus:ring-[#E8BA21]/10 focus:border-[#E8BA21] outline-none text-gray-900 font-medium transition-all" required />
                           {error && <div className="text-red-500 text-xs font-bold bg-red-50 p-4 rounded-xl flex items-center gap-2 animate-bounce"><AlertCircle size={16}/> {error}</div>}
