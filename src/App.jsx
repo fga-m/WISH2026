@@ -757,7 +757,7 @@ export default function App() {
                       </div>
 
                       <div className="flex justify-center">
-                        <img src="/Icon.png" alt="WISH Conference" className="w-32 h-32 object-contain" />
+                        <img src="/Icon.png" alt="WISH Conference" className="w-1/2 object-contain" />
                       </div>
 
                       <div className="bg-white p-8 md:p-10 rounded-[3rem] border border-gray-100 shadow-xl shadow-[#4563AD]/5 mb-4 text-left">
