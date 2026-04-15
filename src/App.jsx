@@ -751,9 +751,9 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      <div className="pt-4 pb-2">
+                      <div className="pt-4">
                         <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
-                        <p className="text-lg text-gray-600 font-medium leading-relaxed mb-8">{CONFERENCE_INFO.tagline}</p>
+                        <p className="text-lg text-gray-600 font-medium leading-relaxed mb-2">{CONFERENCE_INFO.tagline}</p>
                       </div>
 
                       <div className="flex justify-center">
