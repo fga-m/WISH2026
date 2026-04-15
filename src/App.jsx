@@ -631,7 +631,11 @@ export default function App() {
                     <div key={idx} className="bg-white rounded-[1.5rem] border border-gray-100 shadow-sm overflow-hidden flex items-start gap-4 p-5 animate-in slide-in-from-bottom-4">
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-extrabold mb-1 leading-tight">{post.title}</h3>
-                        <p className="text-gray-600 text-sm leading-relaxed font-medium mb-3">{post.body}</p>
+                        <div className="text-gray-600 text-sm leading-relaxed font-medium mb-3">
+                          {post.body.split('\n').map((line, i) => (
+                            <p key={i} className={line.trim() === '' ? 'h-2' : ''}>{line}</p>
+                          ))}
+                        </div>
                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest"><Clock size={12}/> {formatTimestamp(post.timestamp)} • {post.author}</div>
                       </div>
                       {post.image && (
