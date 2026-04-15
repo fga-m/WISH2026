@@ -766,16 +766,6 @@ export default function App() {
                         </form>
                       </div>
 
-                      <div className="bg-[#4563AD]/5 p-8 md:p-10 rounded-[3rem] border border-[#4563AD]/20 text-center overflow-hidden relative group">
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-[#4563AD]/5 rounded-bl-full -z-0"></div>
-                        <div className="relative z-10">
-                          <Ticket className="mx-auto text-[#4563AD] mb-4 group-hover:scale-110 transition-transform" size={40} />
-                          <h2 className="text-2xl font-extrabold text-gray-900 mb-2 font-serif">Need a Ticket?</h2>
-                          <p className="text-sm text-gray-500 font-medium mb-8">Purchase through Brushfire.</p>
-                          <button onClick={openBrushfire} className="w-full bg-[#4563AD] text-white font-extrabold py-5 rounded-2xl shadow-lg hover:bg-[#4563AD]/90 transition-all active:scale-95">Get Tickets</button>
-                        </div>
-                      </div>
-
                       <div className="grid grid-cols-1 gap-4 text-left"><div className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm"><Calendar size={20} className="text-[#E8BA21]" /><span className="text-sm font-bold">{CONFERENCE_INFO.dates}</span></div><a href={CONFERENCE_INFO.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 text-gray-600 bg-white/50 p-4 rounded-2xl border border-white/50 group shadow-sm"><MapPin size={20} className="text-[#E8BA21]" /><div className="flex flex-col"><span className="text-sm font-bold group-hover:text-[#4563AD]">{CONFERENCE_INFO.locationName}</span><span className="text-[10px] font-medium text-gray-400">{CONFERENCE_INFO.address}</span></div></a></div>
                     </>
                   )}
