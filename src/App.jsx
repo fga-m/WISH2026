@@ -751,7 +751,7 @@ export default function App() {
                     </div>
                   ) : (
                     <>
-                      <div className="pt-4">
+                      <div>
                         <p className="text-lg text-gray-600 font-medium leading-relaxed mb-2">{CONFERENCE_INFO.tagline}</p>
                       </div>
 
