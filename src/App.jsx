@@ -738,7 +738,7 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-col space-y-8 text-left animate-in fade-in text-gray-900">
+                <div className="flex flex-col space-y-4 text-left animate-in fade-in text-gray-900">
                   {matchingUsers.length > 0 ? (
                     <div className="pt-4">
                       <button onClick={() => setMatchingUsers([])} className="mb-4 text-sm font-bold text-[#4563AD] flex items-center gap-1 uppercase tracking-widest"><ChevronLeft size={16}/> Back</button>
