@@ -42,7 +42,7 @@ const appId = 'wish-2026-v1';
 
 const CONFERENCE_INFO = {
   dates: "Friday 17th — Sunday 19th April 2026",
-  tagline: "Join us for three days of connection and growth as we explore what it means to be a witness. Together, we will strengthen our bonds with each other and prepare to reach the world around us.",
+  tagline: "We are so excited to see how God moves this weekend! To help you prepare, you can check your workshop sign-ups here using your attendee email. Please keep in mind that any changes made after Thursday will not be reflected in this data.",
   address: "38 Lexton Road, Box Hill North, VIC 3129",
   locationName: "FGAM",
   googleMapsUrl: "https://www.google.com/maps/search/?api=1&query=38+Lexton+Road+Box+Hill+North+VIC+3129"
@@ -752,7 +752,6 @@ export default function App() {
                   ) : (
                     <>
                       <div className="pt-4">
-                        <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-[1.1] font-serif mb-6">Welcome to <span className="text-[#ED4E23]">WISH</span></h1>
                         <p className="text-lg text-gray-600 font-medium leading-relaxed mb-2">{CONFERENCE_INFO.tagline}</p>
                       </div>
 
