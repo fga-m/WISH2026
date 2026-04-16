@@ -259,7 +259,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
           )}
 
           {conferenceUser && (workshop.recordingurl || workshop.notesurl) && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mb-8">
+            <div className="bg-white border-y border-gray-100 shadow-sm p-6 -mx-6 mb-8">
               <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
                 <Headphones size={14} /> Session Resources
               </h3>
