@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { 
-  CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin, 
-  Search, User, ChevronLeft, AlertCircle, ChevronRight, 
-  Sparkles, Calendar, Building2, DoorOpen, 
+import {
+  CalendarDays, Map as MapIcon, BookOpen, Clock, MapPin,
+  Search, User, ChevronLeft, AlertCircle, ChevronRight,
+  Sparkles, Calendar, Building2, DoorOpen,
   Map as MapPinIcon, ExternalLink, Loader2, Bell, X, CheckCircle2,
   Maximize2, Eye, Ticket, Map as MapPinSquare, Plus, Minus, RefreshCcw,
-  Users, LogOut
+  Users, LogOut, Headphones, FileText
 } from 'lucide-react';
 
 // Firebase Imports
@@ -126,6 +126,14 @@ function getDirectDriveLink(url) {
   return idMatch ? `https://lh3.googleusercontent.com/d/${idMatch[1]}` : urlStr;
 }
 
+function getDriveDownloadLink(url) {
+  if (!url) return '';
+  const urlStr = String(url);
+  if (!urlStr.includes('drive.google.com')) return urlStr;
+  const idMatch = urlStr.match(/\/d\/([a-zA-Z0-9_-]+)/) || urlStr.match(/id=([a-zA-Z0-9_-]+)/);
+  return idMatch ? `https://drive.google.com/uc?export=download&id=${idMatch[1]}` : urlStr;
+}
+
 function formatTimestamp(ts) {
   if (!ts || ts === 'Recent') return 'Recent';
   try {
@@ -183,7 +191,7 @@ const DaySelector = React.memo(({ selectedDay, onDayChange }) => {
   );
 });
 
-function WorkshopDetailView({ workshop, onBack }) {
+function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
   if (!workshop) return null;
 
   const getMapsUrlForRoom = (roomName) => {
@@ -247,6 +255,36 @@ function WorkshopDetailView({ workshop, onBack }) {
                   <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
                   <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {conferenceUser && (workshop.recordingurl || workshop.notesurl) && (
+            <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-6 mb-8">
+              <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
+                <Headphones size={14} /> Session Resources
+              </h3>
+              <div className="space-y-4">
+                {workshop.recordingurl && (
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Recording</p>
+                    <audio controls className="w-full rounded-xl" src={getDriveDownloadLink(workshop.recordingurl)}>
+                      Your browser does not support audio playback.
+                    </audio>
+                  </div>
+                )}
+                {workshop.notesurl && (
+                  <a
+                    href={getDriveDownloadLink(workshop.notesurl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-3.5 rounded-xl border border-gray-100 transition-all group"
+                  >
+                    <FileText size={18} className="text-[#ED4E23] shrink-0" />
+                    <span className="text-sm font-bold flex-1">Session Notes (PDF)</span>
+                    <ExternalLink size={12} className="opacity-30" />
+                  </a>
+                )}
               </div>
             </div>
           )}
@@ -619,7 +657,7 @@ export default function App() {
 
       <main className="flex-1 max-w-2xl w-full mx-auto p-6 pb-32 overflow-y-auto">
         {selectedWorkshopId ? (
-          <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} />
+          <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} conferenceUser={conferenceUser} />
         ) : (
           <>
             {activeTab === 'updates' && (
