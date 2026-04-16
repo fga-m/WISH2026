@@ -211,6 +211,7 @@ const DaySelector = React.memo(({ selectedDay, onDayChange }) => {
 });
 
 function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
+  const [notesExpanded, setNotesExpanded] = useState(false);
   if (!workshop) return null;
 
   const getMapsUrlForRoom = (roomName) => {
@@ -253,27 +254,6 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                     </a>
                   </div>
                 ))}
-              </div>
-            </div>
-          )}
-
-          <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8 text-left">
-            <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">About this session</h3>
-            {workshop.description ? <ExpandableText text={workshop.description} maxLength={3000} /> : <p className="italic text-gray-400">Description coming soon...</p>}
-          </div>
-
-          {workshop.biography && workshop.biography !== "N/A" && (
-            <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-[#4563AD]/10 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-[#E8BA21]/10 rounded-bl-full -z-0"></div>
-              <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10 text-left">About the Speaker</h3>
-              <div className="flex items-start gap-4 relative z-10 text-left">
-                <div className="w-20 h-20 rounded-2xl bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center overflow-hidden shadow-sm shrink-0 font-bold text-[#ED4E23] text-2xl uppercase">
-                   {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" loading="lazy" /> : workshop.speaker?.charAt(0)}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
-                  <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
-                </div>
               </div>
             </div>
           )}
@@ -327,17 +307,49 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                   );
                 })()}
                 {workshop.notesurl && (
-                  <a
-                    href={getDriveDownloadLink(workshop.notesurl)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-3 bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-3.5 rounded-xl border border-gray-100 transition-all group"
-                  >
-                    <FileText size={18} className="text-[#ED4E23] shrink-0" />
-                    <span className="text-sm font-bold flex-1">Session Notes (PDF)</span>
-                    <ExternalLink size={12} className="opacity-30" />
-                  </a>
+                  <div>
+                    <button
+                      onClick={() => setNotesExpanded(!notesExpanded)}
+                      className="flex items-center gap-3 w-full bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-3.5 rounded-xl border border-gray-100 transition-all"
+                    >
+                      <FileText size={18} className="text-[#ED4E23] shrink-0" />
+                      <span className="text-sm font-bold flex-1">Session Notes (PDF)</span>
+                      <ChevronRight size={14} className={`opacity-40 transition-transform duration-200 ${notesExpanded ? 'rotate-90' : ''}`} />
+                    </button>
+                    {notesExpanded && (
+                      <div className="mt-2 rounded-xl overflow-hidden border border-gray-100">
+                        <iframe
+                          src={String(workshop.notesurl).includes('drive.google.com')
+                            ? getDrivePreviewLink(workshop.notesurl)
+                            : `https://docs.google.com/viewer?url=${encodeURIComponent(String(workshop.notesurl))}&embedded=true`}
+                          className="w-full h-[70vh]"
+                          title={`${workshop.title} notes`}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8 text-left">
+            <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">Workshop Description</h3>
+            {workshop.description ? <ExpandableText text={workshop.description} maxLength={3000} /> : <p className="italic text-gray-400">Description coming soon...</p>}
+          </div>
+
+          {workshop.biography && workshop.biography !== "N/A" && (
+            <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-[#4563AD]/10 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-[#E8BA21]/10 rounded-bl-full -z-0"></div>
+              <h3 className="text-[#4563AD] font-bold mb-4 text-lg font-serif relative z-10 text-left">About the Speaker</h3>
+              <div className="flex items-start gap-4 relative z-10 text-left">
+                <div className="w-20 h-20 rounded-2xl bg-[#FCF5EB] border-2 border-[#ED4E23] flex items-center justify-center overflow-hidden shadow-sm shrink-0 font-bold text-[#ED4E23] text-2xl uppercase">
+                   {workshop.photo ? <img src={getDirectDriveLink(workshop.photo)} alt={workshop.speaker} className="w-full h-full object-cover" loading="lazy" /> : workshop.speaker?.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-extrabold text-base leading-tight">{String(workshop.speaker || '')}</h4>
+                  <ExpandableText text={workshop.biography} maxLength={250} className="text-sm text-gray-600 mt-1.5 leading-relaxed" />
+                </div>
               </div>
             </div>
           )}
