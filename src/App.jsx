@@ -259,18 +259,20 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
           )}
 
           {conferenceUser && (workshop.recordingurl || workshop.notesurl) && (
-            <div className="bg-white border-y border-gray-100 shadow-sm p-6 -mx-6 mb-8">
-              <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
-                <Headphones size={14} /> Session Resources
-              </h3>
-              <div className="space-y-4">
+            <div className="bg-white border-y border-gray-100 shadow-sm -mx-6 mb-8">
+              <div className="px-6 pt-6 pb-2">
+                <h3 className="text-[#4563AD] font-bold mb-4 text-xs uppercase tracking-widest flex items-center gap-2">
+                  <Headphones size={14} /> Session Resources
+                </h3>
+              </div>
+              <div className="space-y-4 pb-6">
                 {workshop.recordingurl && (() => {
                   const url = String(workshop.recordingurl);
                   const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
                   const isDrive = url.includes('drive.google.com');
                   return (
                     <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                      <p className="px-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                         Recording
                         {isYouTube && (
                           <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-500/10 text-red-500">
@@ -279,7 +281,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                         )}
                       </p>
                       {isYouTube ? (
-                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                        <div className="relative w-full aspect-video overflow-hidden bg-black">
                           <iframe
                             src={getYouTubeEmbedUrl(url)}
                             className="w-full h-full"
@@ -289,7 +291,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                           />
                         </div>
                       ) : isDrive ? (
-                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                        <div className="relative w-full aspect-video overflow-hidden bg-black">
                           <iframe
                             src={getDrivePreviewLink(url)}
                             className="w-full h-full"
@@ -299,15 +301,17 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                           />
                         </div>
                       ) : (
-                        <audio controls className="w-full rounded-xl" src={url}>
-                          Your browser does not support audio playback.
-                        </audio>
+                        <div className="px-6">
+                          <audio controls className="w-full rounded-xl" src={url}>
+                            Your browser does not support audio playback.
+                          </audio>
+                        </div>
                       )}
                     </div>
                   );
                 })()}
                 {workshop.notesurl && (
-                  <div>
+                  <div className="px-6">
                     <button
                       onClick={() => setNotesExpanded(!notesExpanded)}
                       className="flex items-center gap-3 w-full bg-gray-50 hover:bg-[#4563AD]/5 text-[#4563AD] px-4 py-3.5 rounded-xl border border-gray-100 transition-all"
@@ -317,7 +321,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                       <ChevronRight size={14} className={`opacity-40 transition-transform duration-200 ${notesExpanded ? 'rotate-90' : ''}`} />
                     </button>
                     {notesExpanded && (
-                      <div className="mt-2 rounded-xl overflow-hidden border border-gray-100">
+                      <div className="-mx-6 mt-2 border-t border-gray-100">
                         <iframe
                           src={String(workshop.notesurl).includes('drive.google.com')
                             ? getDrivePreviewLink(workshop.notesurl)
