@@ -134,6 +134,14 @@ function getDriveDownloadLink(url) {
   return idMatch ? `https://drive.google.com/uc?export=download&id=${idMatch[1]}` : urlStr;
 }
 
+function getDrivePreviewLink(url) {
+  if (!url) return '';
+  const urlStr = String(url);
+  if (!urlStr.includes('drive.google.com')) return urlStr;
+  const idMatch = urlStr.match(/\/d\/([a-zA-Z0-9_-]+)/) || urlStr.match(/id=([a-zA-Z0-9_-]+)/);
+  return idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : urlStr;
+}
+
 function formatTimestamp(ts) {
   if (!ts || ts === 'Recent') return 'Recent';
   try {
@@ -265,14 +273,34 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                 <Headphones size={14} /> Session Resources
               </h3>
               <div className="space-y-4">
-                {workshop.recordingurl && (
-                  <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Recording</p>
-                    <audio controls className="w-full rounded-xl" src={getDriveDownloadLink(workshop.recordingurl)}>
-                      Your browser does not support audio playback.
-                    </audio>
-                  </div>
-                )}
+                {workshop.recordingurl && (() => {
+                  const isVideo = String(workshop.recordingtype || '').toLowerCase() === 'video';
+                  return (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
+                        Recording
+                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isVideo ? 'bg-[#4563AD]/10 text-[#4563AD]' : 'bg-[#ED4E23]/10 text-[#ED4E23]'}`}>
+                          {isVideo ? 'Video' : 'Audio'}
+                        </span>
+                      </p>
+                      {isVideo ? (
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                          <iframe
+                            src={getDrivePreviewLink(workshop.recordingurl)}
+                            className="w-full h-full"
+                            allow="autoplay"
+                            allowFullScreen
+                            title={`${workshop.title} recording`}
+                          />
+                        </div>
+                      ) : (
+                        <audio controls className="w-full rounded-xl" src={getDriveDownloadLink(workshop.recordingurl)}>
+                          Your browser does not support audio playback.
+                        </audio>
+                      )}
+                    </div>
+                  );
+                })()}
                 {workshop.notesurl && (
                   <a
                     href={getDriveDownloadLink(workshop.notesurl)}
