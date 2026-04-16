@@ -224,7 +224,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#FCF5EB] animate-in slide-in-from-right-8 duration-300 pb-24 text-left text-gray-900">
+    <div className="fixed inset-0 z-[60] bg-[#FCF5EB] overflow-y-auto animate-in slide-in-from-right-8 duration-300 pb-24 text-left text-gray-900">
       <div className="w-full max-w-2xl mx-auto px-6">
         <div className="py-4 border-b border-[#E8BA21]/20 flex items-center gap-2 sticky top-0 bg-[#FCF5EB]/90 backdrop-blur-sm z-10">
           <button onClick={onBack} className="p-2 -ml-2 text-[#4563AD] hover:bg-[#4563AD]/10 rounded-full transition-colors"><ChevronLeft size={24} /></button>
@@ -724,10 +724,12 @@ export default function App() {
         </div>
       </header>
 
+      {selectedWorkshopId && (
+        <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} conferenceUser={conferenceUser} />
+      )}
+
       <main className="flex-1 max-w-2xl w-full mx-auto p-6 pb-32 overflow-y-auto">
-        {selectedWorkshopId ? (
-          <WorkshopDetailView workshop={workshopLookupMap.get(String(selectedWorkshopId).toLowerCase()) || Array.from(workshopLookupMap.values()).find(w => normalizeString(w.title) === normalizeString(selectedWorkshopId))} onBack={() => setSelectedWorkshopId(null)} conferenceUser={conferenceUser} />
-        ) : (
+        {!selectedWorkshopId && (
           <>
             {activeTab === 'updates' && (
               <div className="space-y-8 animate-in fade-in text-left text-gray-900">
