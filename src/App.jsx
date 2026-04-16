@@ -142,6 +142,17 @@ function getDrivePreviewLink(url) {
   return idMatch ? `https://drive.google.com/file/d/${idMatch[1]}/preview` : urlStr;
 }
 
+function getYouTubeEmbedUrl(url) {
+  if (!url) return '';
+  const urlStr = String(url);
+  if (urlStr.includes('youtube.com/embed/')) return urlStr;
+  const shortMatch = urlStr.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
+  const watchMatch = urlStr.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
+  return urlStr;
+}
+
 function formatTimestamp(ts) {
   if (!ts || ts === 'Recent') return 'Recent';
   try {
@@ -274,19 +285,33 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
               </h3>
               <div className="space-y-4">
                 {workshop.recordingurl && (() => {
-                  const isVideo = String(workshop.recordingtype || '').toLowerCase() === 'video';
+                  const url = String(workshop.recordingurl);
+                  const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
+                  const isDrive = url.includes('drive.google.com');
                   return (
                     <div>
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                         Recording
-                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest ${isVideo ? 'bg-[#4563AD]/10 text-[#4563AD]' : 'bg-[#ED4E23]/10 text-[#ED4E23]'}`}>
-                          {isVideo ? 'Video' : 'Audio'}
-                        </span>
+                        {isYouTube && (
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-500/10 text-red-500">
+                            YouTube
+                          </span>
+                        )}
                       </p>
-                      {isVideo ? (
+                      {isYouTube ? (
                         <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
                           <iframe
-                            src={getDrivePreviewLink(workshop.recordingurl)}
+                            src={getYouTubeEmbedUrl(url)}
+                            className="w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            title={`${workshop.title} recording`}
+                          />
+                        </div>
+                      ) : isDrive ? (
+                        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+                          <iframe
+                            src={getDrivePreviewLink(url)}
                             className="w-full h-full"
                             allow="autoplay"
                             allowFullScreen
@@ -294,7 +319,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
                           />
                         </div>
                       ) : (
-                        <audio controls className="w-full rounded-xl" src={getDriveDownloadLink(workshop.recordingurl)}>
+                        <audio controls className="w-full rounded-xl" src={url}>
                           Your browser does not support audio playback.
                         </audio>
                       )}
