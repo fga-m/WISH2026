@@ -334,7 +334,7 @@ function WorkshopDetailView({ workshop, onBack, conferenceUser }) {
           )}
 
           <div className="prose prose-sm md:prose-base text-gray-600 font-medium leading-relaxed bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm mb-8 text-left">
-            <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">About this session</h3>
+            <h3 className="text-gray-900 font-bold mb-3 text-lg font-serif">Workshop Description</h3>
             {workshop.description ? <ExpandableText text={workshop.description} maxLength={3000} /> : <p className="italic text-gray-400">Description coming soon...</p>}
           </div>
 
